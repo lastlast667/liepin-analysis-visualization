@@ -17,3 +17,6 @@ env/
 
 # 日志
 *.log
+
+# 忽略 spider 目录下的 User Data 文件夹
+spider/User Data/
