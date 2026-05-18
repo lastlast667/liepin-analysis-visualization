@@ -1,0 +1,204 @@
+2026-05-17 22:25:33,093 [INFO] 从步骤 [tokenize] 恢复执行
+2026-05-17 22:25:33,093 [INFO] 从 checkpoint 加载: D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\data\intermediate\filtered.csv
+2026-05-17 22:25:33,109 [INFO] ============================================================
+2026-05-17 22:25:33,109 [INFO] 开始步骤: tokenize
+2026-05-17 22:25:33,109 [INFO] ============================================================
+2026-05-17 22:25:34,142 [INFO] 分词完成: 513 条 | 已保存到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\data\intermediate\tokenized.csv
+2026-05-17 22:25:34,142 [INFO] 步骤 [tokenize] 完成，耗时 1.03 秒
+2026-05-17 22:25:34,143 [INFO] ============================================================
+2026-05-17 22:25:34,143 [INFO] 开始步骤: vectorize
+2026-05-17 22:25:34,143 [INFO] ============================================================
+2026-05-17 22:25:34,222 [INFO] 向量化完成: X=(513, 3000), y=(513), 类别=11
+2026-05-17 22:25:34,222 [INFO] 类别映射: {0: np.str_('C++开发'), 1: np.str_('Go开发'), 2: np.str_('Java开发'), 3: np.str_('PHP开发'), 4: np.str_('Python开发'), 5: np.str_('全栈'), 6: np.str_('前端'), 7: np.str_('嵌入式开发'), 8: np.str_('爬虫工程师'), 9: np.str_('算法'), 10: np.str_('运维')}
+2026-05-17 22:25:34,222 [INFO] 步骤 [vectorize] 完成，耗时 0.08 秒
+2026-05-17 22:25:34,223 [INFO] ============================================================
+2026-05-17 22:25:34,223 [INFO] 管道全部完成!
+2026-05-17 22:25:34,223 [INFO] ============================================================
+2026-05-17 22:26:10,651 [INFO] 从步骤 [tokenize] 恢复执行
+2026-05-17 22:26:10,652 [INFO] 从 checkpoint 加载: D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\data\intermediate\filtered.csv
+2026-05-17 22:26:10,667 [INFO] ============================================================
+2026-05-17 22:26:10,667 [INFO] 开始步骤: tokenize
+2026-05-17 22:26:10,667 [INFO] ============================================================
+2026-05-17 22:26:10,668 [DEBUG] Building prefix dict from the default dictionary ...
+2026-05-17 22:26:10,717 [DEBUG] Loading model from cache C:\Users\H\AppData\Local\Temp\jieba.cache
+2026-05-17 22:26:11,168 [DEBUG] Loading model cost 0.500 seconds.
+2026-05-17 22:26:11,169 [DEBUG] Prefix dict has been built successfully.
+2026-05-17 22:26:11,651 [INFO] 分词完成: 513 条 | 已保存到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\data\intermediate\tokenized.csv
+2026-05-17 22:26:11,651 [INFO] 步骤 [tokenize] 完成，耗时 0.98 秒
+2026-05-17 22:26:11,651 [INFO] ============================================================
+2026-05-17 22:26:11,651 [INFO] 开始步骤: vectorize
+2026-05-17 22:26:11,652 [INFO] ============================================================
+2026-05-17 22:26:11,715 [INFO] TF-IDF向量化完成，共513条数据，3000个特征，11个类别
+2026-05-17 22:26:11,719 [INFO] 已保存 TF-IDF向量化器 到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\models\tfidf_vectorizer.pkl
+2026-05-17 22:26:11,721 [INFO] 已保存 标签编码器 到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\models\label_encoder.pkl
+2026-05-17 22:26:11,725 [INFO] 已保存 TF-IDF词汇表 到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\data\processed\tfidf_vocab.json
+2026-05-17 22:26:11,735 [INFO] 向量化完成: X=(513, 3000), y=(513), 类别=11
+2026-05-17 22:26:11,735 [INFO] 类别映射: {0: np.str_('C++开发'), 1: np.str_('Go开发'), 2: np.str_('Java开发'), 3: np.str_('PHP开发'), 4: np.str_('Python开发'), 5: np.str_('全栈'), 6: np.str_('前端'), 7: np.str_('嵌入式开发'), 8: np.str_('爬虫工程师'), 9: np.str_('算法'), 10: np.str_('运维')}
+2026-05-17 22:26:11,735 [INFO] 步骤 [vectorize] 完成，耗时 0.08 秒
+2026-05-17 22:26:11,736 [INFO] ============================================================
+2026-05-17 22:26:11,736 [INFO] 管道全部完成!
+2026-05-17 22:26:11,736 [INFO] ============================================================
+2026-05-17 22:26:30,528 [INFO] 从步骤 [tokenize] 恢复执行
+2026-05-17 22:26:30,529 [INFO] 从 checkpoint 加载: D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\data\intermediate\filtered.csv
+2026-05-17 22:26:30,546 [INFO] ============================================================
+2026-05-17 22:26:30,546 [INFO] 开始步骤: tokenize
+2026-05-17 22:26:30,546 [INFO] ============================================================
+2026-05-17 22:26:30,548 [DEBUG] Building prefix dict from the default dictionary ...
+2026-05-17 22:26:30,598 [DEBUG] Loading model from cache C:\Users\H\AppData\Local\Temp\jieba.cache
+2026-05-17 22:26:31,051 [DEBUG] Loading model cost 0.503 seconds.
+2026-05-17 22:26:31,051 [DEBUG] Prefix dict has been built successfully.
+2026-05-17 22:26:31,560 [INFO] 分词完成: 513 条 | 已保存到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\data\intermediate\tokenized.csv
+2026-05-17 22:26:31,560 [INFO] 步骤 [tokenize] 完成，耗时 1.01 秒
+2026-05-17 22:26:31,560 [INFO] ============================================================
+2026-05-17 22:26:31,561 [INFO] 开始步骤: vectorize
+2026-05-17 22:26:31,561 [INFO] ============================================================
+2026-05-17 22:26:31,621 [INFO] TF-IDF向量化完成，共513条数据，3000个特征，11个类别
+2026-05-17 22:26:31,627 [INFO] 已保存 TF-IDF向量化器 到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\models\tfidf_vectorizer.pkl
+2026-05-17 22:26:31,628 [INFO] 已保存 标签编码器 到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\models\label_encoder.pkl
+2026-05-17 22:26:31,631 [INFO] 已保存 TF-IDF词汇表 到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\data\processed\tfidf_vocab.json
+2026-05-17 22:26:31,641 [INFO] 向量化完成: X=(513, 3000), y=(513), 类别=11
+2026-05-17 22:26:31,642 [INFO] 类别映射: {0: np.str_('C++开发'), 1: np.str_('Go开发'), 2: np.str_('Java开发'), 3: np.str_('PHP开发'), 4: np.str_('Python开发'), 5: np.str_('全栈'), 6: np.str_('前端'), 7: np.str_('嵌入式开发'), 8: np.str_('爬虫工程师'), 9: np.str_('算法'), 10: np.str_('运维')}
+2026-05-17 22:26:31,642 [INFO] 步骤 [vectorize] 完成，耗时 0.08 秒
+2026-05-17 22:26:31,642 [INFO] ============================================================
+2026-05-17 22:26:31,642 [INFO] 管道全部完成!
+2026-05-17 22:26:31,643 [INFO] ============================================================
+2026-05-17 22:26:50,960 [INFO] 从头开始执行管道
+2026-05-17 22:26:50,961 [INFO] ============================================================
+2026-05-17 22:26:50,961 [INFO] 开始步骤: raw
+2026-05-17 22:26:50,961 [INFO] ============================================================
+2026-05-17 22:26:51,037 [INFO] 读取完成: 531 条原始数据
+2026-05-17 22:26:51,037 [INFO] 步骤 [raw] 完成，耗时 0.08 秒
+2026-05-17 22:26:51,037 [INFO] ============================================================
+2026-05-17 22:26:51,038 [INFO] 开始步骤: clean
+2026-05-17 22:26:51,038 [INFO] ============================================================
+2026-05-17 22:26:51,073 [INFO] 数据清洗完成: 523 条 | 已保存到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\data\processed\cleaned.csv
+2026-05-17 22:26:51,074 [INFO] 步骤 [clean] 完成，耗时 0.04 秒
+2026-05-17 22:26:51,074 [INFO] ============================================================
+2026-05-17 22:26:51,074 [INFO] 开始步骤: preprocess
+2026-05-17 22:26:51,074 [INFO] ============================================================
+2026-05-17 22:26:51,074 [INFO] 原始数据量: 523 条
+2026-05-17 22:26:51,078 [INFO] 薪资解析完成: 510/523 条成功
+2026-05-17 22:26:51,078 [INFO] 城市标准化完成
+2026-05-17 22:26:51,079 [INFO] 已加载城市-省份映射: 338 个城市
+2026-05-17 22:26:51,080 [INFO] 省份映射完成，已识别 523/523 条
+2026-05-17 22:26:51,080 [INFO] 月薪范围: 1,088.0 ~ 106,667.0 元/月
+2026-05-17 22:26:51,088 [INFO] 预处理完成: 523 条 | 已保存到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\data\processed\preprocessed.csv
+2026-05-17 22:26:51,088 [INFO] 步骤 [preprocess] 完成，耗时 0.01 秒
+2026-05-17 22:26:51,089 [INFO] ============================================================
+2026-05-17 22:26:51,089 [INFO] 开始步骤: label
+2026-05-17 22:26:51,089 [INFO] ============================================================
+2026-05-17 22:26:51,089 [INFO] 原始数据量: 523 条
+2026-05-17 22:26:51,097 [INFO] 标注完成，各分类分布:
+2026-05-17 22:26:51,097 [INFO]   Java开发: 81 条 (15.5%)
+2026-05-17 22:26:51,097 [INFO]   C++开发: 78 条 (14.9%)
+2026-05-17 22:26:51,097 [INFO]   PHP开发: 77 条 (14.7%)
+2026-05-17 22:26:51,098 [INFO]   嵌入式开发: 73 条 (14.0%)
+2026-05-17 22:26:51,098 [INFO]   Python开发: 68 条 (13.0%)
+2026-05-17 22:26:51,098 [INFO]   爬虫工程师: 65 条 (12.4%)
+2026-05-17 22:26:51,098 [INFO]   Go开发: 58 条 (11.1%)
+2026-05-17 22:26:51,098 [INFO]   过滤: 10 条 (1.9%)
+2026-05-17 22:26:51,098 [INFO]   前端: 5 条 (1.0%)
+2026-05-17 22:26:51,098 [INFO]   全栈: 4 条 (0.8%)
+2026-05-17 22:26:51,098 [INFO]   运维: 2 条 (0.4%)
+2026-05-17 22:26:51,098 [INFO]   算法: 2 条 (0.4%)
+2026-05-17 22:26:51,098 [INFO] 第一层(title)覆盖: 513/523 条
+2026-05-17 22:26:51,106 [INFO] 标注完成: 523 条 | 已保存到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\data\intermediate\labeled.csv
+2026-05-17 22:26:51,106 [INFO] 步骤 [label] 完成，耗时 0.02 秒
+2026-05-17 22:26:51,106 [INFO] ============================================================
+2026-05-17 22:26:51,107 [INFO] 开始步骤: filter
+2026-05-17 22:26:51,107 [INFO] ============================================================
+2026-05-17 22:26:51,108 [INFO] 过滤完成: 523 -> 513 条 (移除 10 条过滤数据)
+2026-05-17 22:26:51,115 [INFO] 已保存过滤结果到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\data\intermediate\filtered.csv
+2026-05-17 22:26:51,115 [INFO] 步骤 [filter] 完成，耗时 0.01 秒
+2026-05-17 22:26:51,115 [INFO] ============================================================
+2026-05-17 22:26:51,115 [INFO] 开始步骤: tokenize
+2026-05-17 22:26:51,116 [INFO] ============================================================
+2026-05-17 22:26:51,117 [DEBUG] Building prefix dict from the default dictionary ...
+2026-05-17 22:26:51,172 [DEBUG] Loading model from cache C:\Users\H\AppData\Local\Temp\jieba.cache
+2026-05-17 22:26:51,645 [DEBUG] Loading model cost 0.528 seconds.
+2026-05-17 22:26:51,645 [DEBUG] Prefix dict has been built successfully.
+2026-05-17 22:26:52,112 [INFO] 分词完成: 513 条 | 已保存到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\data\intermediate\tokenized.csv
+2026-05-17 22:26:52,112 [INFO] 步骤 [tokenize] 完成，耗时 1.00 秒
+2026-05-17 22:26:52,112 [INFO] ============================================================
+2026-05-17 22:26:52,112 [INFO] 开始步骤: vectorize
+2026-05-17 22:26:52,113 [INFO] ============================================================
+2026-05-17 22:26:52,172 [INFO] TF-IDF向量化完成，共513条数据，3000个特征，11个类别
+2026-05-17 22:26:52,179 [INFO] 已保存 TF-IDF向量化器 到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\models\tfidf_vectorizer.pkl
+2026-05-17 22:26:52,180 [INFO] 已保存 标签编码器 到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\models\label_encoder.pkl
+2026-05-17 22:26:52,184 [INFO] 已保存 TF-IDF词汇表 到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\data\processed\tfidf_vocab.json
+2026-05-17 22:26:52,199 [INFO] 向量化完成: X=(513, 3000), y=(513), 类别=11
+2026-05-17 22:26:52,199 [INFO] 类别映射: {0: np.str_('C++开发'), 1: np.str_('Go开发'), 2: np.str_('Java开发'), 3: np.str_('PHP开发'), 4: np.str_('Python开发'), 5: np.str_('全栈'), 6: np.str_('前端'), 7: np.str_('嵌入式开发'), 8: np.str_('爬虫工程师'), 9: np.str_('算法'), 10: np.str_('运维')}
+2026-05-17 22:26:52,200 [INFO] 步骤 [vectorize] 完成，耗时 0.09 秒
+2026-05-17 22:26:52,200 [INFO] ============================================================
+2026-05-17 22:26:52,200 [INFO] 管道全部完成!
+2026-05-17 22:26:52,201 [INFO] ============================================================
+2026-05-17 22:44:22,353 [INFO] 从头开始执行管道
+2026-05-17 22:44:22,353 [INFO] ============================================================
+2026-05-17 22:44:22,354 [INFO] 开始步骤: raw
+2026-05-17 22:44:22,354 [INFO] ============================================================
+2026-05-17 22:44:22,463 [INFO] 读取完成: 531 条原始数据
+2026-05-17 22:44:22,464 [INFO] 步骤 [raw] 完成，耗时 0.11 秒
+2026-05-17 22:44:22,464 [INFO] ============================================================
+2026-05-17 22:44:22,464 [INFO] 开始步骤: clean
+2026-05-17 22:44:22,464 [INFO] ============================================================
+2026-05-17 22:44:22,515 [INFO] 数据清洗完成: 523 条 | 已保存到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\data\processed\cleaned.csv
+2026-05-17 22:44:22,515 [INFO] 步骤 [clean] 完成，耗时 0.05 秒
+2026-05-17 22:44:22,515 [INFO] ============================================================
+2026-05-17 22:44:22,516 [INFO] 开始步骤: preprocess
+2026-05-17 22:44:22,516 [INFO] ============================================================
+2026-05-17 22:44:22,516 [INFO] 原始数据量: 523 条
+2026-05-17 22:44:22,519 [INFO] 薪资解析完成: 510/523 条成功
+2026-05-17 22:44:22,520 [INFO] 城市标准化完成
+2026-05-17 22:44:22,520 [INFO] 已加载城市-省份映射: 338 个城市
+2026-05-17 22:44:22,521 [INFO] 省份映射完成，已识别 523/523 条
+2026-05-17 22:44:22,521 [INFO] 月薪范围: 1,088.0 ~ 106,667.0 元/月
+2026-05-17 22:44:22,533 [INFO] 预处理完成: 523 条 | 已保存到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\data\processed\preprocessed.csv
+2026-05-17 22:44:22,533 [INFO] 步骤 [preprocess] 完成，耗时 0.02 秒
+2026-05-17 22:44:22,533 [INFO] ============================================================
+2026-05-17 22:44:22,533 [INFO] 开始步骤: label
+2026-05-17 22:44:22,533 [INFO] ============================================================
+2026-05-17 22:44:22,534 [INFO] 原始数据量: 523 条
+2026-05-17 22:44:22,545 [INFO] 标注完成，各分类分布:
+2026-05-17 22:44:22,545 [INFO]   Java开发: 81 条 (15.5%)
+2026-05-17 22:44:22,545 [INFO]   C++开发: 78 条 (14.9%)
+2026-05-17 22:44:22,545 [INFO]   PHP开发: 77 条 (14.7%)
+2026-05-17 22:44:22,545 [INFO]   嵌入式开发: 73 条 (14.0%)
+2026-05-17 22:44:22,545 [INFO]   Python开发: 68 条 (13.0%)
+2026-05-17 22:44:22,545 [INFO]   爬虫工程师: 65 条 (12.4%)
+2026-05-17 22:44:22,545 [INFO]   Go开发: 58 条 (11.1%)
+2026-05-17 22:44:22,545 [INFO]   过滤: 10 条 (1.9%)
+2026-05-17 22:44:22,545 [INFO]   前端: 5 条 (1.0%)
+2026-05-17 22:44:22,545 [INFO]   全栈: 4 条 (0.8%)
+2026-05-17 22:44:22,545 [INFO]   运维: 2 条 (0.4%)
+2026-05-17 22:44:22,547 [INFO]   算法: 2 条 (0.4%)
+2026-05-17 22:44:22,547 [INFO] 第一层(title)覆盖: 513/523 条
+2026-05-17 22:44:22,558 [INFO] 标注完成: 523 条 | 已保存到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\data\intermediate\labeled.csv
+2026-05-17 22:44:22,558 [INFO] 步骤 [label] 完成，耗时 0.02 秒
+2026-05-17 22:44:22,558 [INFO] ============================================================
+2026-05-17 22:44:22,559 [INFO] 开始步骤: filter
+2026-05-17 22:44:22,559 [INFO] ============================================================
+2026-05-17 22:44:22,561 [INFO] 过滤完成: 523 -> 513 条 (移除 10 条过滤数据)
+2026-05-17 22:44:22,574 [INFO] 已保存过滤结果到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\data\intermediate\filtered.csv
+2026-05-17 22:44:22,574 [INFO] 步骤 [filter] 完成，耗时 0.02 秒
+2026-05-17 22:44:22,574 [INFO] ============================================================
+2026-05-17 22:44:22,575 [INFO] 开始步骤: tokenize
+2026-05-17 22:44:22,575 [INFO] ============================================================
+2026-05-17 22:44:22,575 [DEBUG] Building prefix dict from the default dictionary ...
+2026-05-17 22:44:22,577 [DEBUG] Loading model from cache C:\Users\H\AppData\Local\Temp\jieba.cache
+2026-05-17 22:44:23,044 [DEBUG] Loading model cost 0.467 seconds.
+2026-05-17 22:44:23,044 [DEBUG] Prefix dict has been built successfully.
+2026-05-17 22:44:23,608 [INFO] 分词完成: 513 条 | 已保存到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\data\intermediate\tokenized.csv
+2026-05-17 22:44:23,610 [INFO] 步骤 [tokenize] 完成，耗时 1.03 秒
+2026-05-17 22:44:23,610 [INFO] ============================================================
+2026-05-17 22:44:23,610 [INFO] 开始步骤: vectorize
+2026-05-17 22:44:23,610 [INFO] ============================================================
+2026-05-17 22:44:23,698 [INFO] TF-IDF向量化完成，共513条数据，3000个特征，11个类别
+2026-05-17 22:44:23,704 [INFO] 已保存 TF-IDF向量化器 到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\models\tfidf_vectorizer.pkl
+2026-05-17 22:44:23,705 [INFO] 已保存 标签编码器 到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\models\label_encoder.pkl
+2026-05-17 22:44:23,709 [INFO] 已保存 TF-IDF词汇表 到 D:\codestudy\workspace\PyCharmProjects\lagou-analysis-visualization\data\processed\tfidf_vocab.json
+2026-05-17 22:44:23,718 [INFO] 向量化完成: X=(513, 3000), y=(513), 类别=11
+2026-05-17 22:44:23,718 [INFO] 类别映射: {0: np.str_('C++开发'), 1: np.str_('Go开发'), 2: np.str_('Java开发'), 3: np.str_('PHP开发'), 4: np.str_('Python开发'), 5: np.str_('全栈'), 6: np.str_('前端'), 7: np.str_('嵌入式开发'), 8: np.str_('爬虫工程师'), 9: np.str_('算法'), 10: np.str_('运维')}
+2026-05-17 22:44:23,719 [INFO] 步骤 [vectorize] 完成，耗时 0.11 秒
+2026-05-17 22:44:23,720 [INFO] ============================================================
+2026-05-17 22:44:23,720 [INFO] 管道全部完成!
+2026-05-17 22:44:23,720 [INFO] ============================================================
