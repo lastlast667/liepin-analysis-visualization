@@ -46,9 +46,7 @@ INSTALLED_APPS = [
     "apps.ai_chat",                     # ai客服应用
     "apps.analysis",                    # 数据分析+可视化应用
     "apps.jobs",                        # 岗位数据管理应用
-    "apps.ml_models",                   # ML模型应用
-    "apps.recommendation",              # 推荐系统应用
-    "apps.resume_match",                # 简历匹配管理应用
+    "apps.ml_models",                   # ML模型（薪资预测/推荐/简历匹配）
     "apps.spider",                      # 爬虫应用
     "apps.users",                       # 用户管理应用
 ]
@@ -227,6 +225,8 @@ SIMPLEUI_CONFIG = {
             "models": [
                 {"name": "模型列表", "icon": "fas fa-cube", "url": "ml_models/mlmodel/"},
                 {"name": "薪资预测", "icon": "fas fa-dollar-sign", "url": "ml_models/salaryprediction/"},
+                {"name": "推荐记录", "icon": "fas fa-thumbs-up", "url": "ml_models/recommendationlog/"},
+                {"name": "简历匹配", "icon": "fas fa-file-invoice", "url": "ml_models/resumematchresult/"},
             ],
         },
         {

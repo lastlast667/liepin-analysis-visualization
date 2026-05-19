@@ -14,6 +14,9 @@ class UserAdmin(BaseUserAdmin):
 
 
 class UserProfileInline(admin.StackedInline):
+    """
+    用户资料内联显示在用户管理页面
+    """
     model = UserProfile
     can_delete = False
     verbose_name = "用户资料"

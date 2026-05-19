@@ -4,7 +4,6 @@ from django.db import models
 class MLModel(models.Model):
     MODEL_CHOICES = [
         ("salary_predictor", "薪资预测器"),
-        ("text_classifier", "文本分类器"),
         ("recommender", "推荐模型"),
         ("resume_matcher", "简历匹配器"),
     ]
@@ -26,14 +25,21 @@ class MLModel(models.Model):
 
 
 class SalaryPrediction(models.Model):
+    """
+    薪资预测模型
+    """
     user = models.ForeignKey(
         "users.User", on_delete=models.SET_NULL, blank=True, null=True,
         verbose_name="用户"
     )
     city = models.CharField("城市", max_length=100, blank=True, default="")
+    category = models.CharField("岗位类别", max_length=100, blank=True, default="")
     experience_years = models.IntegerField("工作经验(年)", default=0)
     education = models.CharField("学历", max_length=50, blank=True, default="")
+    work_time = models.CharField("工作时间", max_length=50, blank=True, default="")
+    language_requirement = models.CharField("语言要求", max_length=100, blank=True, default="")
     predicted_min = models.IntegerField("预测最低薪资(K)", blank=True, null=True)
+    predicted_mid = models.IntegerField("预测中位薪资(K)", blank=True, null=True)
     predicted_max = models.IntegerField("预测最高薪资(K)", blank=True, null=True)
     created_at = models.DateTimeField("预测时间", auto_now_add=True)
 
@@ -43,4 +49,53 @@ class SalaryPrediction(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.city} {self.experience_years}年 {self.predicted_min}-{self.predicted_max}K"
+        return f"{self.city} {self.category} {self.experience_years}年 {self.predicted_min}-{self.predicted_max}K"
+
+
+class RecommendationLog(models.Model):
+    """
+    推荐岗位模型
+    """
+    user = models.ForeignKey(
+        "users.User", on_delete=models.CASCADE, related_name="recommendation_logs",
+        verbose_name="用户"
+    )
+    job = models.ForeignKey(
+        "jobs.Job", on_delete=models.CASCADE, related_name="recommendation_logs",
+        verbose_name="推荐岗位"
+    )
+    score = models.FloatField("推荐分数", default=0.0)
+    created_at = models.DateTimeField("推荐时间", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "推荐记录"
+        verbose_name_plural = "推荐记录"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user.username} → {self.job.title} ({self.score:.2f})"
+
+
+class ResumeMatchResult(models.Model):
+    """
+    简历匹配结果模型
+    """
+    user = models.ForeignKey(
+        "users.User", on_delete=models.CASCADE, related_name="resume_matches",
+        verbose_name="用户"
+    )
+    job = models.ForeignKey(
+        "jobs.Job", on_delete=models.CASCADE, related_name="resume_matches",
+        verbose_name="匹配岗位"
+    )
+    similarity_score = models.FloatField("相似度", default=0.0)
+    matched_keywords = models.TextField("匹配关键词", blank=True, default="")
+    created_at = models.DateTimeField("匹配时间", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "简历匹配结果"
+        verbose_name_plural = "简历匹配结果"
+        ordering = ["-similarity_score"]
+
+    def __str__(self):
+        return f"{self.user.username} ↔ {self.job.title} ({self.similarity_score:.2f})"

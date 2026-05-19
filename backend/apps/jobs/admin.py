@@ -4,23 +4,24 @@ from .models import Job
 
 @admin.register(Job)
 class JobAdmin(admin.ModelAdmin):
-    list_display = ["title", "company", "city", "category", "salary_min", "salary_max", "is_active", "created_at"]
-    list_filter = ["category", "city", "education", "experience"]
-    search_fields = ["title", "company", "description"]
+    list_display = ["title", "company_name", "location", "salary", "category", "experience", "education", "crawl_time"]
+    list_filter = ["category", "location_city", "experience", "education", "key"]
+    search_fields = ["title", "company_name", "job_description"]
     ordering = ["-created_at"]
-    date_hierarchy = "created_at"
+    date_hierarchy = "crawl_time"
 
     fieldsets = [
-        ("基础信息", {"fields": ["title", "company", "city"]}),
-        ("薪资信息", {"fields": ["salary_min", "salary_max", "salary_months"]}),
-        ("分类标签", {"fields": ["category", "labels"]}),
-        ("任职要求", {"fields": ["education", "experience"]}),
-        ("文本内容", {"fields": ["description"]}),
-        ("元信息", {"fields": ["source_url", "is_active"]}),
+        ("基本信息", {"fields": ["key", "job_url", "title", "salary"]}),
+        ("公司信息", {"fields": ["company_name", "company_link", "company_tags"]}),
+        ("地点信息", {"fields": ["location", "location_city", "location_province"]}),
+        ("任职要求", {"fields": ["experience", "education", "recruit_count"]}),
+        ("岗位描述", {"fields": ["job_description"]}),
+        ("其他信息", {"fields": ["language_requirement", "industry_requirement", "work_time", "update_time", "crawl_time"]}),
+        ("分析数据", {"fields": ["month_salary_min", "month_salary_max", "category", "tokenized_words"]}),
     ]
 
-    readonly_fields = ["source_url", "created_at", "updated_at"]
-    list_per_page = 20
+    readonly_fields = ["crawl_time", "created_at"]
+    list_per_page = 10
 
     def has_delete_permission(self, request, obj=None):
         if request.user.is_superuser:
