@@ -107,6 +107,9 @@ class Command(BaseCommand):
     help = "运行完整分析管道（原始读取 → 清洗 → 预处理 → 标注 → 过滤 → 分词 → TF-IDF向量化）"
 
     def add_arguments(self, parser):
+        """
+        添加命令行参数
+        """
         parser.add_argument(
             "--resume",
             type=str,
@@ -116,6 +119,9 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        """
+        处理命令逻辑
+        """
         self._setup_logging()
         resume_step = options.get("resume")
 
@@ -149,6 +155,9 @@ class Command(BaseCommand):
         logger.info(f"{'='*60}")
 
     def _setup_logging(self):
+        """
+        设置日志记录
+        """
         root_logger = logging.getLogger()
         for handler in root_logger.handlers[:]:
             root_logger.removeHandler(handler)
