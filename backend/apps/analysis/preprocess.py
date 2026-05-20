@@ -93,12 +93,33 @@ def standardize_city(location: str) -> str:
     return location
 
 
+def parse_recruit_count(recruit_count_raw: str) -> int | None:
+    if not isinstance(recruit_count_raw, str) or not recruit_count_raw.strip():
+        return None
+    num = re.findall(r'\d+', recruit_count_raw.strip())
+    return int(num[0]) if num else None
+
+
+def parse_language_requirement(requirement: str) -> bool:
+    if not isinstance(requirement, str) or not requirement.strip():
+        return False
+    foreign_languages = {"英语", "日语", "韩语", "法语", "德语", "俄语", "西班牙语"}
+    return any(lang in requirement for lang in foreign_languages)
+
+
+def parse_work_time(work_time: str) -> bool:
+    if not isinstance(work_time, str) or not work_time.strip():
+        return False
+    return "周末双休" in work_time.strip()
+
+def parse_experience(experience: str) -> int | None:
+    if not isinstance(experience, str) or not experience.strip():
+        return None
+    num = re.findall(r'\d+', experience.strip())
+    return int(num[0]) if num else None
+
+
 def preprocess_dataframe(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    对DataFrame进行预处理，包括解析薪资、标准化城市、映射省份等
-    :param df: 输入的DataFrame
-    :return: 预处理后的DataFrame
-    """
     df = df.copy()
     original_count = len(df)
     logger.info(f"原始数据量: {original_count} 条")
@@ -119,6 +140,18 @@ def preprocess_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     df["location_province"] = df["location_city"].map(CITY_PROVINCE_MAP).fillna("")
     province_count = (df["location_province"] != "").sum()
     logger.info(f"省份映射完成，已识别 {province_count}/{original_count} 条")
+
+    df["recruit_count_parsed"] = df["recruit_count"].apply(parse_recruit_count)
+    rc_parsed = df["recruit_count_parsed"].notna().sum()
+    logger.info(f"招聘人数解析完成: {rc_parsed}/{original_count} 条成功")
+
+    df["has_language_requirement"] = df["language_requirement"].apply(parse_language_requirement)
+    lang_count = df["has_language_requirement"].sum()
+    logger.info(f"语言要求解析完成: {int(lang_count)} 条有外语要求")
+
+    df["has_weekend_off"] = df["work_time"].apply(parse_work_time)
+    weekend_count = df["has_weekend_off"].sum()
+    logger.info(f"工作时间解析完成: {int(weekend_count)} 条周末双休")
 
     logger.info(f"月薪范围: {df['month_salary_min'].min():,} ~ {df['month_salary_max'].max():,} 元/月")
     return df

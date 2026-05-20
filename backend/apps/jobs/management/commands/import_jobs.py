@@ -78,6 +78,20 @@ class Command(BaseCommand):
         except ValueError:
             logger.error(f"无法解析浮点数: {val}")
             return None  # 解析失败时返回 None
+
+    def _parse_int(self, val):
+        if not val or val.strip() == "":
+            return None
+        try:
+            return int(float(val.strip()))
+        except (ValueError, TypeError):
+            logger.error(f"无法解析整数: {val}")
+            return None
+
+    def _parse_bool(self, val):
+        if not val or val.strip() == "":
+            return False
+        return val.strip().lower() in ("true", "1", "yes")
         
     def handle(self, *args, **options):
         """
@@ -126,6 +140,9 @@ class Command(BaseCommand):
                         location_province=row.get("location_province", ""),
                         category=row.get("category", ""),
                         tokenized_words=row.get("tokenized_words", ""),
+                        recruit_count_parsed=self._parse_int(row.get("recruit_count_parsed")),
+                        has_language_requirement=self._parse_bool(row.get("has_language_requirement")),
+                        has_weekend_off=self._parse_bool(row.get("has_weekend_off")),
                     )
                     batch.append(job)
                     total += 1
