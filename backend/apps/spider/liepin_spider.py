@@ -21,6 +21,8 @@ import socket
 import threading
 import base64
 import subprocess
+import signal
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -76,18 +78,19 @@ LOG_DIR = BASE_DIR / "logs"
 RAW_DATA_DIR = RAW_DATA_DIR
 PROGRESS_FILE = BASE_DIR / "progress.json"
 
-TARGET_API = "api-c.liepin.com/api/com.liepin.searchfront4c.pc-search-job"
+COOKIES_FILE = BASE_DIR / "cookies.json"
 
-DETAIL_DELAY_MEAN = 6  # 详情页延迟时间均值，单位秒
-DETAIL_DELAY_SIGMA = 4  # 详情页延迟时间标准差，单位秒
-COMPANY_DELAY_MEAN = 4  # 公司页延迟时间均值，单位秒
-COMPANY_DELAY_SIGMA = 3  # 公司页延迟时间标准差，单位秒
-LIST_PAGE_DELAY_MEAN = 6  # 列表页延迟时间均值，单位秒
-LIST_PAGE_DELAY_SIGMA = 3  # 列表页延迟时间标准差，单位秒
-PAGE_COOLDOWN_MEAN = 15  # 切换列表页之间的冷却时间均值，单位秒
-PAGE_COOLDOWN_SIGMA = 8  # 切换列表页之间的冷却时间标准差，单位秒
-KEYWORD_SWITCH_MEAN = 12  # 切换关键词之间的冷却时间均值，单位秒
-KEYWORD_SWITCH_SIGMA = 5  # 切换关键词之间的冷却时间标准差，单位秒
+DETAIL_DELAY_MEAN = 18  # 详情页延迟时间均值，单位秒
+DETAIL_DELAY_SIGMA = 9  # 详情页延迟时间标准差，单位秒
+COMPANY_DELAY_MEAN = 15  # 公司页延迟时间均值，单位秒
+COMPANY_DELAY_SIGMA = 8  # 公司页延迟时间标准差，单位秒
+LIST_PAGE_DELAY_MEAN = 15  # 列表页延迟时间均值，单位秒
+LIST_PAGE_DELAY_SIGMA = 8  # 列表页延迟时间标准差，单位秒
+PAGE_COOLDOWN_MEAN = 35  # 切换列表页之间的冷却时间均值，单位秒
+PAGE_COOLDOWN_SIGMA = 15  # 切换列表页之间的冷却时间标准差，单位秒
+KEYWORD_SWITCH_MEAN = 40  # 切换关键词之间的冷却时间均值，单位秒
+KEYWORD_SWITCH_SIGMA = 20  # 切换关键词之间的冷却时间标准差，单位秒
+INIT_DELAY_MAX = 5  # 启动后随机初始延迟最大值，单位秒（调试用）
 
 # ========================== 快代理配置 ==========================
 
@@ -104,6 +107,118 @@ PROXY_PASSWORD = "xb7fkkk2"
 PROXY_MAX_RETRIES = 3
 PROXY_RETRY_DELAY = 5
 CONSECUTIVE_BLOCK_LIMIT = 1  # 连续 N 次详情页失败认定为 IP 被封，触发换 IP
+
+# ========================== 反自动化检测JS ==========================
+
+STEALTH_JS = """
+// 1. 覆盖 navigator.webdriver - 最关键的检测点
+Object.defineProperty(navigator, 'webdriver', { get: () => false });
+
+// 2. 覆盖 navigator.plugins（自动化浏览器空数组）
+Object.defineProperty(navigator, 'plugins', {
+    get: () => [1, 2, 3, 4, 5].map(() => ({ name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer', description: '' }))
+});
+
+// 3. 覆盖 navigator.languages
+Object.defineProperty(navigator, 'languages', { get: () => ['zh-CN', 'zh', 'en-US', 'en'] });
+
+// 4. 覆盖 navigator.platform
+Object.defineProperty(navigator, 'platform', { get: () => 'Win32' });
+
+// 5. 覆盖 navigator.vendor
+Object.defineProperty(navigator, 'vendor', { get: () => 'Google Inc.' });
+
+// 6. 覆盖 navigator.appVersion
+Object.defineProperty(navigator, 'appVersion', { get: () => '5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36' });
+
+// 7. 覆盖 window.devicePixelRatio
+Object.defineProperty(window, 'devicePixelRatio', { get: () => 1 });
+
+// 8. 覆盖 chrome.runtime 检测
+window.chrome = {
+    runtime: { connect: () => {}, sendMessage: () => {}, id: undefined },
+    loadTimes: () => ({
+        requestTime: 0, startLoadTime: 0, commitLoadTime: 0, finishDocumentLoadTime: 0,
+        finishLoadTime: 0, firstPaintTime: 0, firstContentfulPaintTime: 0,
+        navigationType: 'Reload', wasFetchedViaSpdy: true, wasNpnNegotiated: true,
+        connectionInfo: 'h2', npnProtocol: 'h2'
+    }),
+    csi: () => ({ startE: 0, pageT: 1, onloadT: 1, tran: 0 }),
+    app: { isInstalled: false },
+    webstore: { install: () => {}, installDetails: () => {} },
+    history: { pushState: () => {}, replaceState: () => {} },
+    tabs: { query: () => Promise.resolve([]) },
+    extension: { lastError: null }
+};
+
+// 9. 覆盖 WebGL 指纹
+const getParameter = WebGLRenderingContext.prototype.getParameter;
+WebGLRenderingContext.prototype.getParameter = function(param) {
+    if (param === 37445) return 'Intel Inc.';
+    if (param === 37446) return 'Intel Iris OpenGL Engine';
+    if (param === 7936) return 'WebGL 1.0 (OpenGL ES 2.0 Chromium)';
+    if (param === 35724) return 'WebKit';
+    if (param === 35723) return 'WebGL 1.0';
+    return getParameter.call(this, param);
+};
+
+// 10. 覆盖 Permissions API
+if (navigator.permissions) {
+    const origQuery = navigator.permissions.query;
+    navigator.permissions.query = (p) => {
+        if (p.name === 'notifications') return Promise.resolve({ state: 'prompt' });
+        if (p.name === 'geolocation') return Promise.resolve({ state: 'prompt' });
+        if (p.name === 'camera') return Promise.resolve({ state: 'denied' });
+        if (p.name === 'microphone') return Promise.resolve({ state: 'denied' });
+        return origQuery.call(navigator.permissions, p);
+    };
+}
+
+// 11. 覆盖 navigator.hardwareConcurrency
+Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
+
+// 12. 覆盖 navigator.maxTouchPoints
+Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 0 });
+
+// 13. 覆盖 navigator.cookieEnabled
+Object.defineProperty(navigator, 'cookieEnabled', { get: () => true });
+
+// 14. 覆盖 window.screen 信息
+Object.defineProperty(window.screen, 'width', { get: () => 1920 });
+Object.defineProperty(window.screen, 'height', { get: () => 1080 });
+Object.defineProperty(window.screen, 'availWidth', { get: () => 1920 });
+Object.defineProperty(window.screen, 'availHeight', { get: () => 1040 });
+Object.defineProperty(window.screen, 'colorDepth', { get: () => 24 });
+Object.defineProperty(window.screen, 'pixelDepth', { get: () => 24 });
+
+// 15. 移除 __proto__ 上的 webdriver 属性
+if (Object.getOwnPropertyDescriptor(Navigator.prototype, 'webdriver')) {
+    Object.defineProperty(Navigator.prototype, 'webdriver', { get: () => false });
+}
+
+// 16. 覆盖 XMLHttpRequest 的自定义属性检测
+const origXHR = XMLHttpRequest.prototype.open;
+XMLHttpRequest.prototype.open = function() {
+    this.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    return origXHR.apply(this, arguments);
+};
+
+// 17. 覆盖 fetch 检测
+const origFetch = window.fetch;
+window.fetch = function(resource, options) {
+    return origFetch(resource, options);
+};
+"""
+
+
+def inject_stealth_js(page):
+    """向浏览器页面注入反自动化检测 JavaScript。"""
+    try:
+        page.run_js(STEALTH_JS)
+        logger.debug("反自动化检测 JS 已注入")
+    except Exception as e:
+        logger.warning(f"反检测 JS 注入失败: {e}")
+
 
 # ========================== 日志 ==========================
 
@@ -127,6 +242,39 @@ def find_browser_path(browser_type: str) -> str | None:
     return None
 
 
+_global_spider = None
+
+
+def signal_handler(signum, frame):
+    """捕获 Ctrl+C 信号，执行优雅退出。"""
+    signal_name = "SIGINT (Ctrl+C)" if signum == signal.SIGINT else f"信号 {signum}"
+    logger.info(f"\n================================================")
+    logger.info(f"检测到 {signal_name}，正在优雅关闭...")
+    logger.info("================================================")
+    
+    if signum != signal.SIGINT:
+        logger.warning(f"收到非用户触发的信号 {signum}，忽略并继续运行...")
+        return
+    
+    if _global_spider:
+        try:
+            logger.info("正在保存进度...")
+            _global_spider.save_progress()
+            logger.info("进度已保存")
+        except Exception as e:
+            logger.error(f"保存进度失败: {e}")
+        
+        try:
+            logger.info("正在关闭浏览器...")
+            _global_spider.close()
+            logger.info("浏览器已关闭")
+        except Exception as e:
+            logger.error(f"关闭浏览器失败: {e}")
+    
+    logger.info("优雅退出完成")
+    sys.exit(0)
+
+
 def setup_logging() -> logging.Logger:
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     log_file = LOG_DIR / f"spider_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
@@ -146,6 +294,24 @@ logger = setup_logging()
 
 def normal_delay(mean: float, sigma: float) -> float:
     delay = max(1.0, random.gauss(mean, sigma))
+    time.sleep(delay)
+    return delay
+
+
+def human_delay(base_mean: float, base_sigma: float) -> float:
+    """更接近人类行为的延迟：在基础延迟上叠加随机波动。"""
+    base = random.gauss(base_mean, base_sigma)
+    
+    if random.random() > 0.7:
+        extra = random.uniform(2, 8)
+        base += extra
+        logger.debug(f"人类延迟额外增加 {extra:.1f}s")
+    
+    if random.random() > 0.85:
+        base += random.uniform(5, 15)
+        logger.debug(f"人类延迟大幅增加（模拟分心）")
+    
+    delay = max(2.0, base)
     time.sleep(delay)
     return delay
 
@@ -174,8 +340,8 @@ def save_progress(progress: dict) -> None:
 
 BLOCKED_KEYWORDS = [
     "猎聘安全中心", "此网站无法提供安全连接", "行为异常",
-    "访问受限", "访问被拒绝", "请求过于频繁",
-    "403 Forbidden", "429 Too Many Requests", "该网页无法正常运作"
+    "访问受限", "访问被拒绝", "请求过于频繁", "无法访问此网站", "This page isn’t working"
+    "403 Forbidden", "429 Too Many Requests", "该网页无法正常运作", "This site can’t be reached"
 ]
 
 
@@ -532,8 +698,11 @@ def parse_detail_page(html_content: str, job_url: str, keyword: str) -> dict | N
 
 
 def parse_company_page(html_content: str) -> dict:
-    """解析公司详情页 HTML，提取工作时间和公司标签。"""
-    result = {"work_time": "", "company_tags": []}
+    """解析公司详情页 HTML，提取工作时间、公司标签、行业和规模。"""
+    result = {
+        "work_time": "", "company_tags": [],
+        "company_industry": "", "company_scale": "",
+    }
 
     try:
         tree = html.fromstring(html_content)
@@ -547,7 +716,16 @@ def parse_company_page(html_content: str) -> dict:
         )
         result["company_tags"] = [t.strip() for t in tag_els if t.strip()]
 
-        logger.info(f"公司页解析完成 | 工作时间: {result['work_time']} | 标签: {len(result['company_tags'])} 个")
+        p_el = tree.xpath('/html/body/div[1]/div[1]/div/div[1]/div/p')
+        if p_el:
+            raw_text = p_el[0].text_content().strip()
+            parts = [p.strip() for p in raw_text.split("\u00b7") if p.strip()]
+            if parts:
+                result["company_industry"] = parts[0]
+            for part in parts[1:]:
+                if "人" in part and any(c.isdigit() for c in part):
+                    result["company_scale"] = part
+                    break
 
     except Exception as e:
         logger.error(f"公司页解析失败: {e}")
@@ -603,51 +781,54 @@ class LocalProxy:
                 break
 
     def _handle_client(self, client: socket.socket):
+        remote = None
         try:
-            data = client.recv(4096)
+            data = client.recv(8192)
             if not data:
-                client.close()
                 return
             first_line = data.split(b"\r\n")[0].decode("utf-8", errors="replace")
             parts = first_line.split()
             if len(parts) < 2:
-                client.close()
                 return
             method = parts[0]
-            # CONNECT 方法（HTTPS）
+
+            remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            remote.settimeout(30)
+            remote.connect((self.proxy_host, self.proxy_port))
+
             if method == "CONNECT":
                 host_port = parts[1]
-                remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                remote.settimeout(30)
-                remote.connect((self.proxy_host, self.proxy_port))
                 remote.sendall(
                     f"CONNECT {host_port} HTTP/1.1\r\n"
                     f"Proxy-Authorization: Basic {self.auth_header}\r\n"
                     f"Proxy-Connection: Keep-Alive\r\n\r\n".encode()
                 )
                 resp = remote.recv(4096)
+                if b"200" not in resp[:64]:
+                    logger.debug(f"上游代理 CONNECT 拒绝: {host_port}")
+                    client.sendall(resp)
+                    return
                 client.sendall(b"HTTP/1.1 200 Connection Established\r\n\r\n")
-                self._relay(client, remote)
-                return
-            # HTTP 方法
-            target_url = parts[1]
-            remote = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            remote.settimeout(30)
-            remote.connect((self.proxy_host, self.proxy_port))
-            new_data = data.replace(
-                f" {target_url} ".encode(),
-                f" {target_url} ".encode(), 1
-            )
-            auth_line = f"Proxy-Authorization: Basic {self.auth_header}\r\n".encode()
-            insert_pos = data.find(b"\r\n") + 2
-            new_data = data[:insert_pos] + auth_line + data[insert_pos:]
-            remote.sendall(new_data)
+            else:
+                insert_pos = data.find(b"\r\n") + 2
+                auth_line = f"Proxy-Authorization: Basic {self.auth_header}\r\n".encode()
+                new_data = data[:insert_pos] + auth_line + data[insert_pos:]
+                remote.sendall(new_data)
+
             self._relay(client, remote)
-        except Exception:
+            remote = None
+        except Exception as e:
+            logger.debug(f"代理转发异常: {e}")
+        finally:
             try:
                 client.close()
             except Exception:
                 pass
+            if remote:
+                try:
+                    remote.close()
+                except Exception:
+                    pass
 
     def _relay(self, client: socket.socket, remote: socket.socket):
         client.settimeout(30)
@@ -672,14 +853,6 @@ class LocalProxy:
         t2.start()
         t1.join()
         t2.join()
-        try:
-            client.close()
-        except Exception:
-            pass
-        try:
-            remote.close()
-        except Exception:
-            pass
 
     @property
     def proxy_url(self) -> str:
@@ -718,7 +891,7 @@ class LiepinSpider:
     # ---- 指纹混淆配置 ----
 
     def _make_chromium_options(self, proxy_url: str = "") -> ChromiumOptions:
-        """创建随机化指纹的 ChromiumOptions，每次调用都会随机 UA、窗口大小等。"""
+        """创建随机化指纹的 ChromiumOptions，模拟真实用户浏览器环境。"""
         co = ChromiumOptions().new_env()
 
         browser_path = find_browser_path(self.browser_type)
@@ -737,19 +910,48 @@ class LiepinSpider:
 
         co.set_pref("credentials_enable_service", False)
         co.set_pref("profile.password_manager_enabled", False)
-        co.set_pref("exclude_switches", ["enable-automation"])
-        co.set_pref("useAutomationExtension", False)
 
-        co.set_argument("--disable-webrtc")
         co.set_argument("--disable-blink-features", "AutomationControlled")
-        co.set_argument("--disable-features",
-            "ChromeWhatsNewUI,TranslateUI,PrivacySandboxSettings4,"
-            "FedCm,FirstPartySets,RelatedWebsiteSets,TpcdMetadataGrants")
         co.set_argument("--no-first-run")
         co.set_argument("--no-default-browser-check")
+        co.set_argument("--disable-features", "ChromeWhatsNewUI,TranslateUI")
         co.set_argument("--disable-sync")
-        co.set_argument("--disable-gpu")
-        co.set_argument("--disable-background-networking")
+        co.set_argument("--enable-features", "NetworkService,NetworkServiceInProcess")
+        co.set_argument("--ignore-certificate-errors")
+        co.set_argument("--disable-web-security")
+        co.set_argument("--allow-running-insecure-content")
+        co.set_argument("--disable-site-isolation-trials")
+        co.set_argument("--disable-renderer-backgrounding")
+        co.set_argument("--disable-background-timer-throttling")
+        co.set_argument("--disable-backgrounding-occluded-windows")
+        co.set_argument("--disable-client-side-phishing-detection")
+        co.set_argument("--disable-default-apps")
+        co.set_argument("--disable-extensions")
+        co.set_argument("--disable-popup-blocking")
+        co.set_argument("--disable-translate")
+        co.set_argument("--metrics-recording-only")
+        co.set_argument("--safebrowsing-disable-auto-update")
+        co.set_argument("--no-default-browser-check")
+        co.set_argument("--no-pings")
+        co.set_argument("--no-zygote")
+        co.set_argument("--disable-hang-monitor")
+        co.set_argument("--disable-prompt-on-repost")
+        co.set_argument("--disable-session-crashed-bubble")
+        co.set_argument("--disable-ipc-flooding-protection")
+        co.set_argument("--disable-infobars")
+        co.set_argument("--start-maximized")
+
+        co.set_argument("--accept-language", "zh-CN,zh;q=0.9,en;q=0.8")
+
+        co.set_pref("browser.download.folderList", 2)
+        co.set_pref("browser.download.manager.showWhenStarting", False)
+        co.set_pref("browser.download.manager.useWindow", False)
+        co.set_pref("browser.download.manager.focusWhenStarting", False)
+        co.set_pref("browser.download.manager.alertOnEXEOpen", False)
+        co.set_pref("browser.download.manager.closeWhenDone", False)
+        co.set_pref("browser.download.manager.showAlertOnComplete", False)
+        co.set_pref("browser.download.downloadDir", str(Path.home() / "Downloads"))
+
         if proxy_url:
             co.set_proxy(proxy_url)
         return co
@@ -760,7 +962,9 @@ class LiepinSpider:
         self.proxy_ip = proxy_ip
         self.local_proxy = None
         self.page = None
-        self._force_kill_browser()
+        self._stealth_injected = False
+        self.total_ip_used = 0  # 累计使用的IP数量
+        self._close_page()
         if proxy_ip:
             host, port, user, pw = parse_proxy_url(proxy_ip)
             self.local_proxy = LocalProxy(host, port, user, pw)
@@ -771,33 +975,69 @@ class LiepinSpider:
         else:
             co = self._make_chromium_options()
             self.page = ChromiumPage(addr_or_opts=co)
-        self.page.set.load_mode.eager()
-        self.page.listen.start(TARGET_API)
-        logger.info("浏览器已启动，接口监听已开启")
+        inject_stealth_js(self.page)
+        self._stealth_injected = True
+        logger.info("浏览器已启动")
+        self._load_cookies()
+        self._pre_warm_browser()
+
+    # ---- 浏览器预热 ----
+
+    def _pre_warm_browser(self):
+        """访问几个正常站点，建立合法的浏览器会话缓存和Cookie。"""
+        try:
+            warm_sites = [
+                "https://www.baidu.com",
+                "https://news.baidu.com",
+            ]
+            for site in warm_sites:
+                try:
+                    self.page.get(site, timeout=15)
+                    time.sleep(random.uniform(1.0, 2.5))
+                except Exception:
+                    pass
+            logger.info("浏览器预热完成（已访问百度等站点）")
+        except Exception as e:
+            logger.warning(f"浏览器预热过程异常: {e}")
+
+    # ---- Cookie持久化 ----
+
+    def _save_cookies(self):
+        try:
+            cookies = self.page.cookies(as_dict=False)
+            if cookies:
+                save_json(COOKIES_FILE, cookies)
+        except Exception:
+            pass
+
+    def _load_cookies(self):
+        try:
+            if COOKIES_FILE.exists():
+                cookies = json.loads(COOKIES_FILE.read_text(encoding="utf-8"))
+                if cookies:
+                    self.page.set.cookies(cookies)
+                    logger.info(f"已加载 {len(cookies)} 条持久化Cookie")
+        except Exception:
+            pass
 
     # ---- 重启浏览器切换代理 ----
 
-    def _force_kill_browser(self):
-        """强制杀掉所有残留的浏览器进程，避免下次启动时端口被占用。"""
+    def _close_page(self):
         try:
             if self.page:
+                self._save_cookies()
                 try:
                     self.page.quit()
                 except Exception:
                     pass
-            process_name = "msedge.exe" if self.browser_type == "edge" else "chrome.exe"
-            subprocess.run(
-                ["taskkill", "/F", "/IM", process_name],
-                capture_output=True, timeout=5
-            )
-            time.sleep(1)
+                self.page = None
         except Exception:
             pass
 
     def _restart_browser_with_proxy(self, new_proxy_ip: str | None) -> bool:
         """关闭当前浏览器，用新代理IP重新启动浏览器。传 None 则直连。"""
         logger.info(f"正在切换代理: {mask_proxy(self.proxy_ip)} → {mask_proxy(new_proxy_ip) if new_proxy_ip else '直连'}")
-        self._force_kill_browser()
+        self._close_page()
         if self.local_proxy:
             self.local_proxy.stop()
         try:
@@ -807,14 +1047,18 @@ class LiepinSpider:
                 self.local_proxy.start()
                 co = self._make_chromium_options(self.local_proxy.proxy_url)
                 self.page = ChromiumPage(addr_or_opts=co)
+                self.total_ip_used += 1
             else:
                 self.local_proxy = None
                 co = self._make_chromium_options()
                 self.page = ChromiumPage(addr_or_opts=co)
-            self.page.set.load_mode.eager()
-            self.page.listen.start(TARGET_API)
+            inject_stealth_js(self.page)
+            self._stealth_injected = True
             self.proxy_ip = new_proxy_ip
+            self._load_cookies()
+            self._pre_warm_browser()
             logger.info(f"浏览器已使用新代理重启成功: {mask_proxy(new_proxy_ip) if new_proxy_ip else '直连'}")
+            logger.info(f"累计已使用 IP 数: {self.total_ip_used}")
             return True
         except BaseException as e:
             logger.error(f"使用代理重启浏览器失败: {mask_proxy(new_proxy_ip) if new_proxy_ip else '直连'} | {e}")
@@ -823,14 +1067,62 @@ class LiepinSpider:
     # ---- 浏览器获取 HTML ----
 
     def _simulate_human_reading(self):
-        """模拟人类浏览行为：随机分段滚动 + 短暂停顿。"""
+        """模拟人类浏览行为：随机分段滚动 + 鼠标移动 + 随机停顿 + 随机点击。"""
         try:
-            scrolls = random.randint(2, 4)
-            for _ in range(scrolls):
-                distance = random.randint(150, 500)
+            scrolls = random.randint(2, 5)
+            for i in range(scrolls):
+                distance = random.randint(100, 600)
                 self.page.scroll.down(distance)
-                time.sleep(random.uniform(0.5, 2.0))
-            time.sleep(random.uniform(1.0, 3.0))
+                pause = random.uniform(0.8, 3.5)
+                time.sleep(pause)
+
+                if random.random() > 0.3:
+                    try:
+                        x = random.randint(50, 900)
+                        y = random.randint(50, 700)
+                        self.page.run_js(f"""
+                            (function() {{
+                                var evt = new MouseEvent('mousemove', {{
+                                    clientX: {x}, clientY: {y},
+                                    screenX: {x}, screenY: {y},
+                                    bubbles: true,
+                                    cancelable: true
+                                }});
+                                document.dispatchEvent(evt);
+                            }})();
+                        """)
+                    except Exception:
+                        pass
+
+                if i > 0 and random.random() > 0.7:
+                    try:
+                        x = random.randint(100, 800)
+                        y = random.randint(100, 600)
+                        self.page.run_js(f"""
+                            (function() {{
+                                var evt = new MouseEvent('mousedown', {{
+                                    clientX: {x}, clientY: {y},
+                                    button: 0, bubbles: true
+                                }});
+                                document.dispatchEvent(evt);
+                                setTimeout(function() {{
+                                    var evt2 = new MouseEvent('mouseup', {{
+                                        clientX: {x}, clientY: {y},
+                                        button: 0, bubbles: true
+                                    }});
+                                    document.dispatchEvent(evt2);
+                                }}, 100);
+                            }})();
+                        """)
+                    except Exception:
+                        pass
+
+            time.sleep(random.uniform(1.5, 4.0))
+
+            if random.random() > 0.5:
+                self.page.scroll.up(random.randint(100, 300))
+                time.sleep(random.uniform(0.5, 1.5))
+
         except BaseException:
             pass
 
@@ -895,7 +1187,7 @@ class LiepinSpider:
 
     def crawl_keyword(self, keyword: str, progress: dict) -> list[dict]:
         """爬取单个关键词：获取链接 → 爬详情 → 爬公司页 → 返回完整数据列表。
-        每页完成后立即保存文件并更新进度。中途检测到 IP 被封时自动换 IP 续爬。"""
+        浏览器保持持久会话，不每页重启。仅在检测到IP被封时切换代理。"""
         logger.info(f"===== 开始爬取关键词: [{keyword}] =====")
         all_jobs = []
 
@@ -908,20 +1200,32 @@ class LiepinSpider:
 
             display_page = page_num + 1
 
-            new_proxy = _get_working_proxy()
-            self._restart_browser_with_proxy(new_proxy)
-
             jobs = self.crawl_list_page(keyword, page_num)
             if jobs is None or len(jobs) == 0:
-                logger.warning(f"[{keyword}] 第 {display_page} 页提取链接失败，跳过")
-                continue
+                blocked = self._is_current_page_blocked()
+                if blocked:
+                    logger.warning(f"[{keyword}] 第 {display_page} 页列表页被风控拦截，切换代理重试...")
+                    new_proxy = _get_working_proxy()
+                    self._restart_browser_with_proxy(new_proxy)
+                    normal_delay(8, 4)
+                    jobs = self.crawl_list_page(keyword, page_num)
+                if jobs is None or len(jobs) == 0:
+                    logger.warning(f"[{keyword}] 第 {display_page} 页提取链接失败，跳过")
+                    continue
 
             page_data = []
             consecutive_blocked = 0
 
+            if len(jobs) > 3:
+                random.shuffle(jobs)
+                logger.info(f"[{keyword}] 已打乱本页 {len(jobs)} 条链接顺序")
+
             for idx, link in enumerate(jobs, 1):
                 if idx > 1:
-                    normal_delay(DETAIL_DELAY_MEAN, DETAIL_DELAY_SIGMA)
+                    human_delay(DETAIL_DELAY_MEAN, DETAIL_DELAY_SIGMA)
+
+                if random.random() > 0.6:
+                    self._simulate_human_reading()
 
                 detail_result = self._crawl_single_job(link["job_url"], keyword)
 
@@ -946,8 +1250,8 @@ class LiepinSpider:
                     else:
                         consecutive_blocked = 0
 
-                if len(page_data) > 0 and len(page_data) % 3 == 0:
-                    cool = normal_delay(20, 5)
+                if len(page_data) > 0 and len(page_data) % 2 == 0:
+                    cool = normal_delay(30, 10)
                     logger.info(
                         f"阶段性冷却: 本页已爬 {len(page_data)}/{len(jobs)} 条, "
                         f"暂停 {cool:.0f}s"
@@ -978,29 +1282,50 @@ class LiepinSpider:
         logger.info(f"[{keyword}] 全部完成，共 {len(all_jobs)} 条数据")
         return all_jobs
 
-    def _crawl_single_job(self, job_url: str, keyword: str) -> dict | None:
-        """爬取单个岗位：详情页 + 公司页，全部用浏览器获取。"""
-        detail_data = self._fetch_detail_page(job_url, keyword)
-        if not detail_data:
-            return None
+    def _crawl_single_job(self, job_url: str, keyword: str, max_retries: int = 3) -> dict | None:
+        """爬取单个岗位：详情页 + 公司页，全部用浏览器获取。公司页遇风控也会重试。"""
+        for attempt in range(max_retries):
+            detail_data = self._fetch_detail_page(job_url, keyword)
+            if not detail_data:
+                # 详情页失败，直接返回None，让外层处理风控
+                return None
 
-        company_link = detail_data.get("company_link", "")
-        if company_link:
-            normal_delay(COMPANY_DELAY_MEAN, COMPANY_DELAY_SIGMA)
-            html_content = self._browser_get_html(company_link)
-            if html_content:
-                company_info = parse_company_page(html_content)
-                detail_data["work_time"] = company_info.get("work_time", "")
-                detail_data["company_tags"] = company_info.get("company_tags", [])
+            company_link = detail_data.get("company_link", "")
+            if company_link:
+                human_delay(COMPANY_DELAY_MEAN, COMPANY_DELAY_SIGMA)
 
-        if detail_data.get("title") or detail_data.get("salary"):
-            logger.info(
-                f"完成: [{keyword}] {detail_data.get('title', 'N/A')} | "
-                f"{detail_data.get('salary', 'N/A')} | "
-                f"{detail_data.get('company_name', 'N/A')}"
-            )
+                if random.random() > 0.7:
+                    self._simulate_human_reading()
 
-        return detail_data
+                html_content = self._browser_get_html(company_link)
+                if not html_content:
+                    if self._is_current_page_blocked():
+                        logger.warning(f"公司页被风控拦截，尝试更换IP重试... (第{attempt+1}次)")
+                        retry_proxy = _get_working_proxy()
+                        self._restart_browser_with_proxy(retry_proxy)
+                        human_delay(8, 4)
+                        continue
+                    else:
+                        # 不是风控，只是解析失败，仍然保留详情页数据
+                        logger.warning(f"公司页解析失败，但保留详情页数据: {company_link[:80]}")
+                else:
+                    company_info = parse_company_page(html_content)
+                    detail_data["work_time"] = company_info.get("work_time", "")
+                    detail_data["company_tags"] = company_info.get("company_tags", [])
+                    detail_data["company_industry"] = company_info.get("company_industry", "")
+                    detail_data["company_scale"] = company_info.get("company_scale", "")
+
+            if detail_data.get("title") or detail_data.get("salary"):
+                logger.info(
+                    f"完成: [{keyword}] {detail_data.get('title', 'N/A')} | "
+                    f"{detail_data.get('salary', 'N/A')} | "
+                    f"{detail_data.get('company_name', 'N/A')}"
+                )
+
+            return detail_data
+
+        logger.warning(f"多次尝试后仍未成功爬取完整数据: {job_url[:80]}")
+        return None
 
     def _fetch_detail_page(self, job_url: str, keyword: str) -> dict | None:
         """用浏览器获取详情页 HTML 并解析。"""
@@ -1019,7 +1344,8 @@ class LiepinSpider:
 
     def close(self):
         logger.info("关闭浏览器...")
-        self._force_kill_browser()
+        self._save_cookies()
+        self._close_page()
         if self.local_proxy:
             self.local_proxy.stop()
 
@@ -1028,17 +1354,26 @@ class LiepinSpider:
 
 
 def main():
+    global _global_spider
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
     progress = load_progress()
     start_idx = progress.get("current_keyword_idx", 0)
     total_jobs = progress.get("total_jobs", 0)
 
+    init_delay = random.uniform(10, INIT_DELAY_MAX)
+    logger.info(f"启动后随机等待 {init_delay:.0f}s，模拟用户打开浏览器后的停顿...")
+    time.sleep(init_delay)
+
     logger.info("=" * 60)
     logger.info("猎聘岗位爬虫启动（DrissionPage + 快代理版）")
     logger.info(f"使用浏览器: {BROWSER_TYPE}")
-    logger.info(f"监听接口: {TARGET_API}")
     logger.info(f"关键词列表: {KEYWORDS}")
     logger.info(f"每关键词翻页数: {MAX_PAGES_PER_KEYWORD}")
     logger.info(f"从第 {start_idx + 1} 个关键词开始")
+    logger.info("按 Ctrl+C 可优雅退出")
     logger.info("=" * 60)
 
     first_proxy = _get_working_proxy()
@@ -1048,6 +1383,10 @@ def main():
         logger.info(f"首次使用代理: {mask_proxy(first_proxy)}")
 
     spider = LiepinSpider(proxy_ip=first_proxy or "")
+    _global_spider = spider
+    if first_proxy:
+        spider.total_ip_used = 1  # 初始代理也算1个
+        logger.info(f"累计已使用 IP 数: {spider.total_ip_used}")
 
     try:
         for idx, keyword in enumerate(KEYWORDS[start_idx:], start=start_idx):
