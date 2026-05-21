@@ -23,6 +23,7 @@ CSV_FIELD_MAP = [
     "company_name", "company_link", "job_description",
     "language_requirement", "industry_requirement", "work_time",
     "company_tags", "crawl_time",
+    "company_industry", "company_scale_min", "company_scale_max",
     "month_salary_min", "month_salary_max",
     "location_city", "location_province", "category", "tokenized_words",
 ]
@@ -128,6 +129,10 @@ class Command(BaseCommand):
                         update_time=row.get("update_time", ""),
                         company_name=row.get("company_name", ""),
                         company_link=row.get("company_link", ""),
+                        company_industry=row.get("company_industry", ""),
+                        company_scale=row.get("company_scale", ""),
+                        company_scale_min=self._parse_int(row.get("company_scale_min")),
+                        company_scale_max=self._parse_int(row.get("company_scale_max")),
                         job_description=row.get("job_description", ""),
                         language_requirement=row.get("language_requirement", ""),
                         industry_requirement=row.get("industry_requirement", ""),

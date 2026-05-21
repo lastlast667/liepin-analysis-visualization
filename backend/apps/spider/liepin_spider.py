@@ -44,6 +44,8 @@ from job_analysis.app_config import RAW_DATA_DIR
 # 浏览器选择: "chrome" 或 "edge"
 BROWSER_TYPE = "chrome"
 
+SHOW_DATA = False  # 是否在终端输出爬取数据的详细 JSON
+
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
@@ -707,14 +709,14 @@ def parse_company_page(html_content: str) -> dict:
     try:
         tree = html.fromstring(html_content)
 
-        time_el = tree.xpath('//div[@class="time-type"]/span/text()')
+        time_el = tree.xpath('//div[@class="time-type"]//text()')
         if time_el:
-            result["work_time"] = time_el[0].strip()
+            result["work_time"] = "".join(t.strip() for t in time_el if t.strip()).strip()
 
         tag_els = tree.xpath(
-            '//div[@data-selector="company-tags"]//div[@class="tags-item"]/span/text()'
+            '//div[@data-selector="company-tags"]//div[@class="tags-item"]'
         )
-        result["company_tags"] = [t.strip() for t in tag_els if t.strip()]
+        result["company_tags"] = [t.text_content().strip() for t in tag_els if t.text_content().strip()]
 
         p_el = tree.xpath('/html/body/div[1]/div[1]/div/div[1]/div/p')
         if p_el:
@@ -1316,11 +1318,14 @@ class LiepinSpider:
                     detail_data["company_scale"] = company_info.get("company_scale", "")
 
             if detail_data.get("title") or detail_data.get("salary"):
-                logger.info(
+                msg = (
                     f"完成: [{keyword}] {detail_data.get('title', 'N/A')} | "
                     f"{detail_data.get('salary', 'N/A')} | "
                     f"{detail_data.get('company_name', 'N/A')}"
                 )
+                logger.info(msg)
+                if SHOW_DATA:
+                    logger.info(f"数据详情:\n{json.dumps(detail_data, ensure_ascii=False, indent=2)}")
 
             return detail_data
 
@@ -1375,6 +1380,14 @@ def main():
     logger.info(f"从第 {start_idx + 1} 个关键词开始")
     logger.info("按 Ctrl+C 可优雅退出")
     logger.info("=" * 60)
+
+    global SHOW_DATA
+    show_data_prompt = input("是否在终端展示爬取数据详情? (y/N): ").strip().lower()
+    SHOW_DATA = show_data_prompt == "y"
+    if SHOW_DATA:
+        logger.info("已启用数据详情展示（大量输出可能会影响终端性能）")
+    else:
+        logger.info("数据详情展示已关闭")
 
     first_proxy = _get_working_proxy()
     if not first_proxy:

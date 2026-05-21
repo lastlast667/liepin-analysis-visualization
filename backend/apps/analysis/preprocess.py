@@ -119,6 +119,58 @@ def parse_experience(experience: str) -> int | None:
     return int(num[0]) if num else None
 
 
+def handle_company_scale(scale_value: str) -> str:
+    """处理公司规模字段的占位函数，当前原值返回。
+    后续可在此函数中补充公司规模的标准化逻辑。
+    """
+    return scale_value
+
+
+def parse_company_scale(scale_str: str) -> tuple:
+    """解析公司规模字符串，返回 (scale_min, scale_max) 整数值。
+
+    支持格式：
+      - "1000-2000人" → (1000, 2000)
+      - "10000人以上" → (10000, 99999)
+      - "1-49人"     → (1, 49)
+      - ""           → (None, None)
+    """
+    if not isinstance(scale_str, str) or not scale_str.strip():
+        return None, None
+
+    scale_str = scale_str.strip()
+
+    range_match = re.match(r"(\d+)-(\d+)人", scale_str)
+    if range_match:
+        return int(range_match.group(1)), int(range_match.group(2))
+
+    above_match = re.match(r"(\d+)人以上", scale_str)
+    if above_match:
+        return int(above_match.group(1)), 99999
+
+    return None, None
+
+
+def supplement_company_info(df: pd.DataFrame) -> pd.DataFrame:
+    """补充公司信息：
+    - 当 company_link 为空时，将 industry_requirement 赋值给 company_industry
+    - company_scale 调用占位函数处理
+    """
+    df = df.copy()
+
+    no_link_mask = df["company_link"].isna() | (df["company_link"] == "")
+
+    for idx in df[no_link_mask].index:
+        if pd.isna(df.loc[idx, "company_industry"]) or df.loc[idx, "company_industry"] == "":
+            industry_val = df.loc[idx, "industry_requirement"]
+            if pd.notna(industry_val) and industry_val != "":
+                df.loc[idx, "company_industry"] = industry_val
+
+    df["company_scale"] = df["company_scale"].apply(handle_company_scale)
+
+    return df
+
+
 def preprocess_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     original_count = len(df)
@@ -140,6 +192,21 @@ def preprocess_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     df["location_province"] = df["location_city"].map(CITY_PROVINCE_MAP).fillna("")
     province_count = (df["location_province"] != "").sum()
     logger.info(f"省份映射完成，已识别 {province_count}/{original_count} 条")
+
+    before = (df["company_industry"] != "").sum()
+    df = supplement_company_info(df)
+    after = (df["company_industry"] != "").sum()
+    filled = after - before
+    if filled > 0:
+        logger.info(f"公司行业补充完成，通过 industry_requirement 补充了 {filled} 条数据")
+    else:
+        logger.info(f"公司行业补充完成，无需额外补充")
+
+    scale_results = df["company_scale"].apply(parse_company_scale)
+    df["company_scale_min"] = scale_results.apply(lambda x: x[0])
+    df["company_scale_max"] = scale_results.apply(lambda x: x[1])
+    scale_parsed = df["company_scale_min"].notna().sum()
+    logger.info(f"公司规模解析完成: {scale_parsed}/{original_count} 条成功")
 
     df["recruit_count_parsed"] = df["recruit_count"].apply(parse_recruit_count)
     rc_parsed = df["recruit_count_parsed"].notna().sum()
