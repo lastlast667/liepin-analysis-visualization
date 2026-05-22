@@ -24,7 +24,7 @@ CSV_FIELD_MAP = [
     "language_requirement", "industry_requirement", "work_time",
     "company_tags", "crawl_time",
     "company_industry", "company_scale_min", "company_scale_max",
-    "month_salary_min", "month_salary_max",
+    "month_salary_min", "month_salary_max", "month_salary_avg",
     "location_city", "location_province", "category", "tokenized_words",
 ]
 
@@ -141,6 +141,7 @@ class Command(BaseCommand):
                         crawl_time=parse_crawl_time(row.get("crawl_time", "")),
                         month_salary_min=self._parse_float(row.get("month_salary_min")),
                         month_salary_max=self._parse_float(row.get("month_salary_max")),
+                        month_salary_avg=self._parse_float(row.get("month_salary_avg")),
                         location_city=row.get("location_city", ""),
                         location_province=row.get("location_province", ""),
                         category=row.get("category", ""),

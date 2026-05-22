@@ -51,7 +51,7 @@ def parse_salary(salary_str: str) -> tuple:
 
     # 薪资面议
     if "面议" in salary_str:
-        return None, None
+        return None, None, None
 
     # 日薪格式：X元/天 或 X-Y元/天
     daily_match = re.match(r"(\d+)(?:-(\d+))?元/天", salary_str)
@@ -60,7 +60,8 @@ def parse_salary(salary_str: str) -> tuple:
         max_val = int(daily_match.group(2)) if daily_match.group(2) else min_val
         month_min = round(min_val * 21.75)
         month_max = round(max_val * 21.75)
-        return month_min, month_max
+        month_avg = round((month_min + month_max) / 2)
+        return month_min, month_max, month_avg
 
     # 月薪格式：X-Yk 或 X-Yk·N薪
     monthly_match = re.match(r"(\d+)-(\d+)k(?:·(\d+)薪)?", salary_str)
@@ -72,10 +73,11 @@ def parse_salary(salary_str: str) -> tuple:
             months = int(months)
             min_val = round(min_val * months / 12)
             max_val = round(max_val * months / 12)
-        return min_val, max_val
+        avg_val = round((min_val + max_val) / 2)
+        return min_val, max_val, avg_val
 
     logger.warning(f"无法识别的薪资格式: {salary_str}")
-    return None, None
+    return None, None, None
 
 
 def standardize_city(location: str) -> str:
@@ -94,6 +96,13 @@ def standardize_city(location: str) -> str:
 
 
 def parse_recruit_count(recruit_count_raw: str) -> int | None:
+    """解析招聘人数字符串，返回整数值。
+
+    支持格式：
+      - "10人" → 10
+      - "20人" → 20
+      - "" → None
+    """
     if not isinstance(recruit_count_raw, str) or not recruit_count_raw.strip():
         return None
     num = re.findall(r'\d+', recruit_count_raw.strip())
@@ -101,6 +110,18 @@ def parse_recruit_count(recruit_count_raw: str) -> int | None:
 
 
 def parse_language_requirement(requirement: str) -> bool:
+    """解析语言要求字符串，返回是否包含外文。
+
+    支持格式：
+      - "英语" → True
+      - "日语" → True
+      - "韩语" → True
+      - "法语" → True
+      - "德语" → True
+      - "俄语" → True
+      - "西班牙语" → True
+      - "" → False
+    """
     if not isinstance(requirement, str) or not requirement.strip():
         return False
     foreign_languages = {"英语", "日语", "韩语", "法语", "德语", "俄语", "西班牙语"}
@@ -108,11 +129,30 @@ def parse_language_requirement(requirement: str) -> bool:
 
 
 def parse_work_time(work_time: str) -> bool:
+    """解析工作时间字符串，返回是否为周末双休。
+
+    支持格式：
+      - "周末双休" → True
+      - "" → False
+    """
     if not isinstance(work_time, str) or not work_time.strip():
         return False
     return "周末双休" in work_time.strip()
 
 def parse_experience(experience: str) -> int | None:
+    """解析工作经验字符串，返回整数值。
+
+    支持格式：
+      - "1-3年" → 1
+      - "3-5年" → 4
+      - "5-7年" → 6
+      - "7-9年" → 8
+      - "9-11年" → 10
+      - "11-13年" → 12
+      - ""13年以上" → 14
+      - "" → None
+    """
+
     if not isinstance(experience, str) or not experience.strip():
         return None
     num = re.findall(r'\d+', experience.strip())
@@ -179,6 +219,7 @@ def preprocess_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     salary_results = df["salary"].apply(parse_salary)
     df["month_salary_min"] = salary_results.apply(lambda x: x[0])
     df["month_salary_max"] = salary_results.apply(lambda x: x[1])
+    df["month_salary_avg"] = salary_results.apply(lambda x: x[2])
 
     parsed = df["month_salary_min"].notna().sum()
     logger.info(f"薪资解析完成: {parsed}/{original_count} 条成功")

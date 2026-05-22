@@ -23,9 +23,6 @@ class Job(models.Model):
         MASTER = "硕士", "硕士"
         PHD = "博士", "博士"
         NO_LIMIT = "学历不限", "学历不限"
-        INTERN_3D = "3天/周", "3天/周"
-        INTERN_4D = "4天/周", "4天/周"
-        INTERN_5D = "5天/周", "5天/周"
 
     class ExperienceChoices(models.TextChoices):
         NO_LIMIT = "经验不限", "经验不限"
@@ -73,6 +70,7 @@ class Job(models.Model):
 
     month_salary_min = models.FloatField("月薪下限", blank=True, null=True)
     month_salary_max = models.FloatField("月薪上限", blank=True, null=True)
+    month_salary_avg = models.FloatField("月薪均值", blank=True, null=True)
     location_city = models.CharField("城市", max_length=100, blank=True, default="")
     location_province = models.CharField("省份", max_length=100, blank=True, default="")
     category = models.CharField("岗位类别", max_length=100, blank=True, default="", choices=CategoryChoices.choices)

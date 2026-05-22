@@ -596,7 +596,10 @@ def _extract_text(tree, xpath_expr: str) -> str:
 
 
 def _get_job_properties(tree) -> tuple:
-    """从 job-properties 中提取地点、经验、学历。"""
+    """
+    从 job-properties 中提取地点、经验、学历。
+    取学历时，如果经验要求是实习，则判断下一个text是否是数字，如果是，则取下下一个text，否则取下一个text。
+    """
     spans = tree.xpath('//div[@class="job-properties"]/span[not(@class="split")]')
     location = ""
     experience = ""
@@ -606,11 +609,30 @@ def _get_job_properties(tree) -> tuple:
         text = span.text_content().strip()
         if not text:
             continue
+
+        # 辅助函数：判断字符串中是否包含数字
+        def has_digit(s: str) -> bool:
+            return any(c.isdigit() for c in s)
+
         if idx == 0:
             location = text
         elif idx == 1:
             experience = text
         elif idx == 2:
+            if experience == "实习":
+                idx += 1
+                continue
+            else:
+                education = text
+                break
+        elif idx == 3:
+            if has_digit(text):
+                idx += 1
+                continue
+            else:
+                education = text
+                break
+        elif idx == 4:
             education = text
         else:
             break

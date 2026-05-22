@@ -110,7 +110,7 @@ def label_row(key: str, title: str, job_description: str) -> str:
             if any(kw.lower() in desc_lower for kw in keywords):
                 return key
 
-        # 如果描述中也没有匹配CATEGORY_KEYWORDS_DESC的关键词，将该条数据分类为"过滤"
+        # 第四层：如果描述中也没有匹配CATEGORY_KEYWORDS_DESC的关键词，将该条数据分类为"过滤"
         return "过滤"
     except Exception as e:
         logger.error(f"标注数据时出错: {e}")
