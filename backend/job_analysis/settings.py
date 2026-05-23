@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 
     "rest_framework",  # ✅ DRF注册
+    "rest_framework.authtoken",  # ✅ DRF Token认证
     "corsheaders",     # ✅ 跨域注册
     
     # 你的业务App（保持原有顺序不变）
@@ -155,6 +156,7 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.BasicAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
     ],
     
     # 全局权限类（开发阶段用AllowAny，上线改成IsAuthenticated）
