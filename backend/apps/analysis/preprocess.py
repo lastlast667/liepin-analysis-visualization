@@ -203,7 +203,8 @@ def supplement_company_info(df: pd.DataFrame) -> pd.DataFrame:
     for idx in df[no_link_mask].index:
         if pd.isna(df.loc[idx, "company_industry"]) or df.loc[idx, "company_industry"] == "":
             industry_val = df.loc[idx, "industry_requirement"]
-            if pd.notna(industry_val) and industry_val != "":
+            if isinstance(industry_val, str) and industry_val.strip():
+                industry_val = industry_val.split(",")[0].strip()   # 提取第一个行业
                 df.loc[idx, "company_industry"] = industry_val
 
     df["company_scale"] = df["company_scale"].apply(handle_company_scale)
