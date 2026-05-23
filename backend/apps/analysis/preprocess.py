@@ -33,6 +33,21 @@ def load_city_province_map(words: list[str]) -> dict[str, str]:
             city_province[city.strip()] = province.strip()
     return city_province
 
+@load_words_from("province_partition.txt")
+def load_province_partition_map(words: list[str]) -> dict[str, str]:
+    """
+    加载省份-分区词表，返回省份-分区字典。
+    :param words: 省份-分区词表内容，每个元素为一个省份-分区对
+    :return: 省份-分区字典
+    """
+    province_partition = {}
+    for line in words:
+        if "," in line:
+            province, partition = line.split(",", 1)
+            province_partition[province.strip()] = partition.strip()
+    return province_partition
+
+
 
 def parse_salary(salary_str: str) -> tuple:
     """解析薪资字段，返回 (salary_min, salary_max, month_min, month_max)，单位：元。
@@ -230,10 +245,15 @@ def preprocess_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
     CITY_PROVINCE_MAP = load_city_province_map()
     logger.info(f"已加载城市-省份映射: {len(CITY_PROVINCE_MAP)} 个城市")
+    PROVINCE_PARTITION_MAP = load_province_partition_map()
+    logger.info(f"已加载省份-分区映射: {len(PROVINCE_PARTITION_MAP)} 个省份")
 
     df["location_province"] = df["location_city"].map(CITY_PROVINCE_MAP).fillna("")
     province_count = (df["location_province"] != "").sum()
     logger.info(f"省份映射完成，已识别 {province_count}/{original_count} 条")
+    df["location_partition"] = df["location_province"].map(PROVINCE_PARTITION_MAP).fillna("")
+    partition_count = (df["location_partition"] != "").sum()
+    logger.info(f"分区映射完成，已识别 {partition_count}/{original_count} 条")
 
     before = (df["company_industry"] != "").sum()
     df = supplement_company_info(df)

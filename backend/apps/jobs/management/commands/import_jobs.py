@@ -25,7 +25,7 @@ CSV_FIELD_MAP = [
     "company_tags", "crawl_time",
     "company_industry", "company_scale_min", "company_scale_max",
     "month_salary_min", "month_salary_max", "month_salary_avg",
-    "location_city", "location_province", "category", "tokenized_words",
+    "location_city", "location_province", "location_partition", "category", "tokenized_words",
 ]
 
 def parse_company_tags(raw: str):
@@ -144,6 +144,7 @@ class Command(BaseCommand):
                         month_salary_avg=self._parse_float(row.get("month_salary_avg")),
                         location_city=row.get("location_city", ""),
                         location_province=row.get("location_province", ""),
+                        location_partition=row.get("location_partition", ""),
                         category=row.get("category", ""),
                         tokenized_words=row.get("tokenized_words", ""),
                         recruit_count_parsed=self._parse_int(row.get("recruit_count_parsed")),

@@ -41,10 +41,4 @@ export const analysisAPI = {
   searchJobs: (params) => api.get('/analysis/jobs/', { params }),
 }
 
-export const mlAPI = {
-  resumeMatch: (data) => api.post('/ml/resume-match/', data),
-  salaryPrediction: (data) => api.post('/ml/salary-predict/', data),
-  jobRecommendation: (params) => api.get('/ml/recommend/', { params }),
-}
-
 export default api

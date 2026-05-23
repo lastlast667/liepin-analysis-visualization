@@ -138,12 +138,14 @@ class Job(models.Model):
     work_time = models.CharField("工作时间", max_length=255, blank=True, default="")
     company_tags = models.JSONField("公司标签", default=list, blank=True)
     crawl_time = models.DateTimeField("爬取时间", blank=True, null=True)
+    
 
     month_salary_min = models.FloatField("月薪下限", blank=True, null=True)
     month_salary_max = models.FloatField("月薪上限", blank=True, null=True)
     month_salary_avg = models.FloatField("月薪均值", blank=True, null=True)
     location_city = models.CharField("城市", max_length=100, blank=True, default="")
     location_province = models.CharField("省份", max_length=100, blank=True, default="")
+    location_partition = models.CharField("分区", max_length=100, blank=True, default="")
     category = models.CharField("岗位类别", max_length=100, blank=True, default="", choices=CategoryChoices.choices)
     tokenized_words = models.TextField("分词结果", blank=True, default="")
 
