@@ -9,6 +9,10 @@ from rest_framework.authtoken.models import Token
 from .models import User
 
 
+def test_view(request):
+    return Response({"status": "ok", "message": "No CSRF check!"})
+
+
 @csrf_exempt
 @api_view(["POST"])
 @permission_classes([AllowAny])

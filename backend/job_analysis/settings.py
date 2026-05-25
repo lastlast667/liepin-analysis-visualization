@@ -57,7 +57,6 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -151,25 +150,23 @@ REST_FRAMEWORK = {
     # 全局分页配置（所有列表接口默认分页）
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,  # 每页返回20条数据
-    
-    # 全局认证类（开发环境保留Session方便后台测试）
+
+    # 全局认证类（使用Token认证，禁用Session认证避免CSRF问题）
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.BasicAuthentication",
         "rest_framework.authentication.TokenAuthentication",
     ],
-    
+
     # 全局权限类（开发阶段用AllowAny，上线改成IsAuthenticated）
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.AllowAny",
     ],
-    
+
     # 响应渲染器（支持JSON和浏览器API界面）
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
     ],
-    
+
     # 日期时间格式统一
     "DATETIME_FORMAT": "%Y-%m-%d %H:%M:%S",
     "DATE_FORMAT": "%Y-%m-%d",
@@ -262,3 +259,10 @@ SIMPLEUI_CONFIG = {
 # -------------------------- 跨域配置 --------------------------
 CORS_ALLOW_ALL_ORIGINS = True  # 开发环境用，上线改成具体域名
 CORS_ALLOW_CREDENTIALS = True
+
+# -------------------------- CSRF 配置（完全禁用）--------------------------
+CSRF_USE_SESSIONS = False
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_DOMAIN = None
+CSRF_TRUSTED_ORIGINS = []

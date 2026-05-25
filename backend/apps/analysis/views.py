@@ -42,7 +42,7 @@ def company_analysis(request):
     # ── 统计：公司总数、覆盖行业总数、平均规模 ──
 
     companies_qs = (
-        queryset.values("company_name", "company_industry", "company_scale", "company_link", "location_city")   # 公司名称、行业、规模、链接
+        queryset.values("company_name", "company_industry", "company_scale", "company_link", "location_city", "recruit_count_parsed")
         .annotate(job_count=Count("id"),)
         .order_by("-job_count")
     )
@@ -116,7 +116,7 @@ def company_analysis(request):
     else:
         province_distribution = province_raw
 
-    # ── 岗位数 Top 10 公司 ──
+    # ── 岗位数 Top 10 公司 + 招聘人数 Top 10 公司 ──
     company_data = {}
     for item in companies_qs:
         name = item["company_name"]
@@ -127,14 +127,17 @@ def company_analysis(request):
                 "scale": item["company_scale"] or "未知",
                 "city": item["location_city"] or "未知",
                 "jobs": item["job_count"],
+                "recruit_count_parsed": item["recruit_count_parsed"] or 1,
             }
         else:
             exciting = company_data[name]
             if item["location_city"] not in exciting["city"]:
                 company_data[name]["city"] = company_data[name]["city"] + "," + item["location_city"]
-            company_data[name]["jobs"] += item["job_count"]
+            company_data[name]["recruit_count_parsed"] += (item["recruit_count_parsed"] or 1)   # 累加招聘人数，空值默认1
+            company_data[name]["jobs"] += item["job_count"]                                     # 累加岗位数
 
-    company_list = sorted(list(company_data.values()), key=lambda x: x["jobs"], reverse=True)[:10]
+    company_list_by_jobs = sorted(list(company_data.values()), key=lambda x: (x["jobs"], x["recruit_count_parsed"]), reverse=True)[:10]
+    company_list_by_recruit = sorted(list(company_data.values()), key=lambda x: (x["recruit_count_parsed"], x["jobs"]), reverse=True)[:10]
 
 
     # ── 公司福利词云 ──
@@ -171,7 +174,8 @@ def company_analysis(request):
         "industry_distribution": industry_distribution,
         "scale_distribution": scale_distribution,
         "province_distribution": province_distribution,
-        "companies": company_list,
+        "companies_by_jobs": company_list_by_jobs,
+        "companies_by_recruit": company_list_by_recruit,
         "company_tags_cloud": tag_cloud,
         "category_options": category_options,
         "partition_options": partition_options,

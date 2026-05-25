@@ -126,13 +126,16 @@
 
     <!-- Company Table -->
     <div class="glass-card">
-      <div class="p-6 border-b border-dark-700/50">
-        <h3 class="text-lg font-semibold text-gray-200">在招岗位 Top 10 公司</h3>
+      <div class="p-6 border-b border-dark-700/50 flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-gray-200">在招 Top 10 公司</h3>
+        <button @click="toggleSort" class="px-3 py-1 text-xs rounded-lg border border-dark-600 hover:border-primary-500/50 hover:text-primary-400 transition-colors">
+          {{ sortByJobs ? '按岗位数' : '按招聘人数' }}
+        </button>
       </div>
       <div v-if="loading" class="flex items-center justify-center h-40">
         <div class="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
       </div>
-      <div v-else-if="companyList.length === 0" class="flex items-center justify-center h-40 text-gray-500">暂无数据</div>
+      <div v-else-if="sortedCompanyList.length === 0" class="flex items-center justify-center h-40 text-gray-500">暂无数据</div>
       <div v-else class="overflow-x-auto">
         <table class="w-full">
           <thead>
@@ -142,10 +145,11 @@
               <th class="text-left p-4 text-sm text-gray-400 font-medium">公司规模</th>
               <th class="text-left p-4 text-sm text-gray-400 font-medium">所在城市</th>
               <th class="text-left p-4 text-sm text-gray-400 font-medium">岗位数量</th>
+              <th class="text-left p-4 text-sm text-gray-400 font-medium">招聘人数</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(item, idx) in companyList" :key="idx"
+            <tr v-for="(item, idx) in sortedCompanyList" :key="idx"
                 class="border-b border-dark-700/30 hover:bg-dark-800/50 transition-colors">
               <td class="p-4 text-sm text-gray-200">{{ item.name }}</td>
               <td class="p-4 text-sm text-gray-400">{{ item.industry }}</td>
@@ -153,6 +157,9 @@
               <td class="p-4 text-sm text-gray-400">{{ item.city }}</td>
               <td class="p-4 text-sm">
                 <span class="px-2 py-1 rounded-lg bg-primary-500/10 text-primary-400 text-xs">{{ item.jobs }} 个</span>
+              </td>
+              <td class="p-4 text-sm">
+                <span class="px-2 py-1 rounded-lg bg-green-500/10 text-green-400 text-xs">{{ item.recruit_count_parsed || 0 }} 人</span>
               </td>
             </tr>
           </tbody>
@@ -181,7 +188,8 @@ const stats = reactive({ total_companies: null, total_industries: null, top_indu
 const industryDistribution = ref([])
 const scaleDistribution = ref([])
 const provinceDistribution = ref([])
-const companyList = ref([])
+const companiesByJobs = ref([])
+const companiesByRecruit = ref([])
 const categoryOptions = ref([])
 const partitionOptions = ref([])
 
@@ -191,6 +199,7 @@ const categoryOpen = ref(false)
 const partitionOpen = ref(false)
 const categoryRef = ref(null)
 const partitionRef = ref(null)
+const sortByJobs = ref(true)
 
 const selectedCategoryLabel = computed(() => {
   if (selectedCategories.value.length === 0) return ''
@@ -342,6 +351,12 @@ function clearPartitionFilter() {
   selectedPartitions.value = []
   partitionOpen.value = false
 }
+function toggleSort() {
+  sortByJobs.value = !sortByJobs.value
+}
+const sortedCompanyList = computed(() => {
+  return sortByJobs.value ? companiesByJobs.value : companiesByRecruit.value
+})
 
 async function fetchData() {
   loading.value = true
@@ -359,7 +374,8 @@ async function fetchData() {
     industryDistribution.value = data.industry_distribution || []   // 行业分布
     scaleDistribution.value = data.scale_distribution || []         // 规模分布
     provinceDistribution.value = data.province_distribution || []   // 省份分布
-    companyList.value = data.companies || []                        // 公司列表
+    companiesByJobs.value = data.companies_by_jobs || []           // 按岗位数排序的公司列表
+    companiesByRecruit.value = data.companies_by_recruit || []     // 按招聘人数排序的公司列表
     const tags = data.company_tags_cloud || []                      // 公司标签云
     // 配置词云图
     wordCloudOption.value = {
