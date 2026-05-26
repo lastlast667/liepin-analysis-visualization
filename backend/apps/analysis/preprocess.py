@@ -47,6 +47,20 @@ def load_province_partition_map(words: list[str]) -> dict[str, str]:
             province_partition[province.strip()] = partition.strip()
     return province_partition
 
+@load_words_from("experience.txt")
+def load_experience_map(words: list[str]) -> dict[str, str]:
+    """
+    加载经验-等级映射词表，返回经验-等级映射字典。
+    :param words: 经验-等级映射词表内容，每个元素为一个经验-等级对
+    :return: 经验-等级映射字典
+    """
+    experience_map = {}
+    for line in words:
+        if "," in line:
+            experience, level = line.split(",", 1)
+            experience_map[experience.strip()] = level.strip()
+    return experience_map
+
 
 
 def parse_salary(salary_str: str) -> tuple:
@@ -154,24 +168,13 @@ def parse_work_time(work_time: str) -> bool:
         return False
     return "周末双休" in work_time.strip()
 
-def parse_experience(experience: str) -> int | None:
-    """解析工作经验字符串，返回整数值。
-
-    支持格式：
-      - "1-3年" → 1
-      - "3-5年" → 4
-      - "5-7年" → 6
-      - "7-9年" → 8
-      - "9-11年" → 10
-      - "11-13年" → 12
-      - ""13年以上" → 14
-      - "" → None
+def parse_experience(experience: str, experience_map: dict[str, str]) -> str | None:
+    """解析工作经验字符串，返回经验-等级映射字典中对应的等级。
     """
-
     if not isinstance(experience, str) or not experience.strip():
         return None
-    num = re.findall(r'\d+', experience.strip())
-    return int(num[0]) if num else None
+    experience = experience.strip()
+    return experience_map.get(experience, None)
 
 
 def handle_company_scale(scale_value: str) -> str:
@@ -247,6 +250,8 @@ def preprocess_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     logger.info(f"已加载城市-省份映射: {len(CITY_PROVINCE_MAP)} 个城市")
     PROVINCE_PARTITION_MAP = load_province_partition_map()
     logger.info(f"已加载省份-分区映射: {len(PROVINCE_PARTITION_MAP)} 个省份")
+    experience_map = load_experience_map()
+    logger.info(f"已加载经验-等级映射: {len(experience_map)} 个经验")
 
     df["location_province"] = df["location_city"].map(CITY_PROVINCE_MAP).fillna("")
     province_count = (df["location_province"] != "").sum()
@@ -273,6 +278,10 @@ def preprocess_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     df["recruit_count_parsed"] = df["recruit_count"].apply(parse_recruit_count)
     rc_parsed = df["recruit_count_parsed"].notna().sum()
     logger.info(f"招聘人数解析完成: {rc_parsed}/{original_count} 条成功")
+
+    df["experience_level"] = df["experience"].apply(lambda x: parse_experience(x, experience_map))
+    experience_parsed = df["experience_level"].notna().sum()
+    logger.info(f"经验解析完成: {experience_parsed}/{original_count} 条成功")
 
     df["has_language_requirement"] = df["language_requirement"].apply(parse_language_requirement)
     lang_count = df["has_language_requirement"].sum()
