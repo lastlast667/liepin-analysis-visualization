@@ -1,6 +1,6 @@
 <template>
-  <aside class="w-64 h-screen fixed left-0 top-0 z-40 flex flex-col border-r border-dark-800/80 bg-dark-900/95 backdrop-blur-xl">
-    <div class="p-6 border-b border-dark-800/80">
+  <aside class="w-64 h-screen fixed left-0 top-0 z-40 flex flex-col border-r border-dark-600/80 bg-dark-900/95 backdrop-blur-xl">
+    <div class="p-6 border-b border-dark-600/80">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center shadow-lg shadow-primary-500/25">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,7 +84,7 @@
       </router-link>
     </nav>
 
-    <div class="p-4 border-t border-dark-800/80">
+    <div class="p-4 border-t border-dark-600/80">
       <div class="flex items-center gap-3 px-3 py-2">
         <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white text-sm font-medium">
           {{ username.charAt(0).toUpperCase() }}

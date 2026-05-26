@@ -1,25 +1,16 @@
 <template>
   <div class="min-h-screen flex items-center justify-center bg-dark-950 relative overflow-hidden">
-    <!-- Background Effects -->
-    <div class="absolute inset-0 overflow-hidden">
-      <div class="absolute -top-40 -right-40 w-96 h-96 bg-accent-500/10 rounded-full blur-3xl" />
-      <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl" />
-      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent-500/5 rounded-full blur-3xl" />
-    </div>
-
     <div class="relative w-full max-w-md mx-4">
-      <!-- Logo -->
       <div class="text-center mb-8 animate-fade-in">
         <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 shadow-2xl shadow-accent-500/30 mb-4">
           <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
           </svg>
         </div>
-        <h2 class="text-2xl font-bold text-gradient">创建账号</h2>
+        <h2 class="text-2xl font-bold text-gray-100">创建账号</h2>
         <p class="text-gray-500 mt-2">注册开始使用猎聘数据分析系统</p>
       </div>
 
-      <!-- Register Card -->
       <div class="glass-card p-8 animate-slide-up">
         <form @submit.prevent="handleRegister" class="space-y-4">
           <div>
@@ -74,11 +65,11 @@
             </div>
           </div>
 
-          <div v-if="errorMsg" class="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+          <div v-if="errorMsg" class="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm">
             {{ errorMsg }}
           </div>
 
-          <div v-if="successMsg" class="p-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-sm">
+          <div v-if="successMsg" class="p-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-600 text-sm">
             {{ successMsg }}
           </div>
 
@@ -95,7 +86,7 @@
         <div class="mt-6 text-center">
           <p class="text-gray-500 text-sm">
             已有账号？
-            <router-link to="/login" class="text-primary-400 hover:text-primary-300 font-medium transition-colors">
+            <router-link to="/login" class="text-primary-500 hover:text-primary-400 font-medium transition-colors">
               立即登录
             </router-link>
           </p>

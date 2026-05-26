@@ -150,6 +150,7 @@ class Command(BaseCommand):
                         recruit_count_parsed=self._parse_int(row.get("recruit_count_parsed")),
                         has_language_requirement=self._parse_bool(row.get("has_language_requirement")),
                         has_weekend_off=self._parse_bool(row.get("has_weekend_off")),
+                        experience_level=row.get("experience_level", ""),
                     )
                     batch.append(job)
                     total += 1
