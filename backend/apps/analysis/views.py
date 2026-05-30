@@ -374,7 +374,62 @@ def location_distribution(request):
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def job_search(request):
-    """岗位列表 API（待实现）"""
+    """
+    岗位列表 API
+    参数：
+      - keyword: 岗位关键词
+      - city: 城市名称
+      - salary: 薪资范围
+      - education: 学历要求
+      - experience_level: 经验要求
+      - sort_by: 排序字段(默认"default"综合)、 salary (薪资降序)、 experience (经验)、 education (学历)
+      - page: 页码 (default 1)
+      - page_size: 每页条数 (default 10)
+
+    返回：
+      - total: 岗位总数
+      - page: 当前页码
+      - page_size: 每页条数
+      - total_pages: 总页数
+
+      - results: 岗位列表
+        - 每个岗位包含以下字段：
+          - id: 岗位ID
+          - title: 岗位标题
+          - company_name: 公司名称
+          - salary: 薪资
+          - month_salary_avg: 平均月薪资
+          - location_city: 城市
+          - education: 学历
+          - experience: 经验
+          - experience_level: 经验等级
+          - recruit_count: 招聘人数
+          - recruit_count_parsed: 招聘人数解析后的整数
+          - company_industry: 公司行业
+          - update_time: 更新时间
+      
+      - city_options: 可选的城市列表
+        - 每个城市包含以下字段：
+          - city: 城市名称
+    
+      - hot_jobs: 热门岗位列表
+        - 每个岗位包含以下字段：
+          - id: 岗位ID
+          - title: 岗位标题
+          - company_name: 公司名称
+          - salary: 薪资
+          - month_salary_avg: 平均月薪资
+
+      - hot_cities: 热门城市列表
+        - 每个城市包含以下字段：
+          - name: 城市名称
+          - count: 岗位数量
+
+      - hot_companies: 热门公司列表
+        - 每个公司包含以下字段：
+          - name: 公司名称
+          - count: 岗位数量
+    """
     return Response({
         "total": 0, "results": []
         
@@ -383,7 +438,50 @@ def job_search(request):
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def job_detail(request, job_id):
-    """岗位详情 API（待实现）"""
+    """
+    岗位详情 API（待实现）
+    参数：
+      - job_id: 岗位ID
+    返回：
+      - job_id: 岗位ID
+      - title: 岗位标题
+      - company_name: 公司名称
+      - salary: 薪资
+      - month_salary_avg: 平均月薪资
+      - location_city: 城市
+      - education: 学历
+      - experience: 经验
+      - experience_level: 经验等级
+      - recruit_count: 招聘人数
+      - recruit_count_parsed: 招聘人数解析后的整数
+      - company_industry: 公司行业
+      - company_scale: 公司规模
+      - company_link: 公司链接
+      - has_weekend_off: 是否有周末休息
+      - job_url: 岗位链接
+      - company_tags: 公司标签
+      - job_description: 岗位描述
+      - language_requirement: 语言要求
+      - update_time: 更新时间
+
+      - company_stats: 公司统计信息
+        - job_count: 岗位数量
+        - recruit_total: 招聘人数
+        - avg_salary: 平均薪资
+
+      - similar_jobs: 相似岗位列表
+        - id: 岗位ID
+        - title: 岗位标题
+        - company_name: 公司名称
+        - location_city: 城市
+        - salary: 薪资
+
+      - salary_analysis: 薪资分析信息
+        - industry_avg: 行业平均薪资
+        - above_percentage: 高于行业平均薪资比例
+        - range_min: 薪资范围最小值
+        - range_max: 薪资范围最大值
+    """
     return Response({"job_id": job_id, "title": "岗位标题", "location_city": "城市", "location_province": "省份", "location_partition": "分区", "education": "学历", "experience_level": "经验", "salary": 0, "salary_range": "薪资范围", "salary_type": "薪资类型", "has_weekend_off": True, "job_url": "https://www.liepin.com/jobs/123456.html"})
 
 @api_view(["GET"])
