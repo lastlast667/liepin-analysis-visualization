@@ -48,17 +48,17 @@ def company_analysis(request):
     partition_param = request.query_params.get("partition", "")
 
     # 查询所有数据
-    queryset = Job.objects.all()
+    base_queryset = Job.objects.all()
     
     if category_param:
         categories = [c.strip() for c in category_param.split(",") if c.strip()]
         if categories:
-            queryset = queryset.filter(category__in=categories)
+            queryset = base_queryset.filter(category__in=categories)
 
     if partition_param:
         partitions = [p.strip() for p in partition_param.split(",") if p.strip()]
         if partitions:
-            queryset = queryset.filter(location_partition__in=partitions)
+            queryset = base_queryset.filter(location_partition__in=partitions)
 
     # ── 统计：公司总数、覆盖行业总数、平均规模 ──
 
@@ -177,13 +177,13 @@ def company_analysis(request):
 
     # ── 下拉框选项 ──
     category_options = list(
-        queryset.exclude(category="")
+        base_queryset.exclude(category="")
         .values_list("category", flat=True)
         .distinct()
         .order_by("category")
     )
     partition_options = list(
-        queryset.exclude(location_partition="")
+        base_queryset.exclude(location_partition="")
         .values_list("location_partition", flat=True)
         .distinct()
         .order_by("location_partition")
@@ -430,6 +430,31 @@ def job_search(request):
           - name: 公司名称
           - count: 岗位数量
     """
+
+    # 获取URL里的参数
+    keyword = request.query_params.get("keyword")
+    city = request.query_params.get("city")
+    salary = request.query_params.get("salary")
+    education = request.query_params.get("education")
+    experience_level = request.query_params.get("experience_level")
+    sort_by = request.query_params.get("sort_by")
+    page = request.query_params.get("page", 1)
+    page_size = request.query_params.get("page_size", 10)
+
+    # 从数据库里查询岗位
+    jobs = Job.objects.all()
+
+    # 筛选岗位关键词
+    if keyword:
+        jobs = jobs.filter(title__icontains=keyword)
+
+    # if city:
+
+    # 分页
+    start = (page - 1) * int(page_size)
+    end = start + int(page_size)
+    jobs = jobs[start:end]
+
     return Response({
         "total": 0, "results": []
         
