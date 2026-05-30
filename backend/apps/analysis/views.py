@@ -368,15 +368,23 @@ def location_distribution(request):
         "partition_distribution": location_partition_ratio,   # 分区分布比例
         "city_education_distribution": city_education_distribution,   # 城市学历要求分布比例
         "city_experience_distribution": city_experience_distribution,   # 城市经验要求分布比例
-    })
+        })
 
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def job_search(request):
-    """岗位搜索 API（待实现）"""
-    return Response({"total": 0, "results": []})
+    """岗位列表 API（待实现）"""
+    return Response({
+        "total": 0, "results": []
+        
+        })
 
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def job_detail(request, job_id):
+    """岗位详情 API（待实现）"""
+    return Response({"job_id": job_id, "title": "岗位标题", "location_city": "城市", "location_province": "省份", "location_partition": "分区", "education": "学历", "experience_level": "经验", "salary": 0, "salary_range": "薪资范围", "salary_type": "薪资类型", "has_weekend_off": True, "job_url": "https://www.liepin.com/jobs/123456.html"})
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
