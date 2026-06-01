@@ -40,17 +40,17 @@ def parse_company_tags(raw: str):
         logger.error(f"无法解析公司标签字符串: {raw}")
         return []  # 解析失败时返回空列表
 
-def parse_crawl_time(raw: str):
-    """
-    解析爬取时间字符串为 datetime 对象
-    """
-    if not raw or raw.strip() == "":
-        return None   # 空字符串或空值返回 None
-    try:
-        return datetime.strptime(raw.strip(), "%Y-%m-%d %H:%M:%S.%f")
-    except ValueError:
-        logger.error(f"无法解析爬取时间字符串: {raw}")
-        return None  # 解析失败时返回 None
+# def parse_crawl_time(raw: str):
+#     """
+#     解析爬取时间字符串为 datetime 对象
+#     """
+#     if not raw or raw.strip() == "":
+#         return None   # 空字符串或空值返回 None
+#     try:
+#         return datetime.strptime(raw.strip(), "%Y-%m-%d %H:%M:%S.%f")
+#     except ValueError:
+#         logger.error(f"无法解析爬取时间字符串: {raw}")
+#         return None  # 解析失败时返回 None
     
 
     
@@ -127,6 +127,7 @@ class Command(BaseCommand):
                         education=row.get("education", ""),
                         recruit_count=row.get("recruit_count", ""),
                         update_time=row.get("update_time", ""),
+                        update_time_parsed=row.get("update_time_parsed", ""),
                         company_name=row.get("company_name", ""),
                         company_link=row.get("company_link", ""),
                         company_industry=row.get("company_industry", ""),
@@ -138,7 +139,7 @@ class Command(BaseCommand):
                         industry_requirement=row.get("industry_requirement", ""),
                         work_time=row.get("work_time", ""),
                         company_tags=parse_company_tags(row.get("company_tags", "")),
-                        crawl_time=parse_crawl_time(row.get("crawl_time", "")),
+                        crawl_time=row.get("crawl_time", ""),
                         month_salary_min=self._parse_float(row.get("month_salary_min")),
                         month_salary_max=self._parse_float(row.get("month_salary_max")),
                         month_salary_avg=self._parse_float(row.get("month_salary_avg")),

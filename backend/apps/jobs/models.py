@@ -113,6 +113,7 @@ class Job(models.Model):
     education = models.CharField("学历要求", max_length=50, blank=True, default="", choices=EducationChoices.choices)
     recruit_count = models.CharField("招聘人数(原始)", max_length=50, blank=True, default="")
     update_time = models.CharField("更新时间", max_length=50, blank=True, default="")
+    update_time_parsed = models.DateTimeField("更新时间解析", blank=True, null=True)
     company_name = models.CharField("公司名称", max_length=255, blank=True, default="")
     company_link = models.URLField("公司链接", blank=True, default="")
     company_industry = models.CharField("公司行业", max_length=255, blank=True, default="")

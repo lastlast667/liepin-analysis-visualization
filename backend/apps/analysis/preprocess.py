@@ -2,6 +2,7 @@
 数据预处理：薪资解析 + 城市标准化
 """
 
+from datetime import date
 import sys
 from pathlib import Path
 
@@ -229,6 +230,33 @@ def supplement_company_info(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
+def parse_update_time(update_time: str,crawl_time: pd.Timestamp) -> date:
+    """解析更新时间字符串，返回 pandas 时间戳。
+
+    支持格式：
+      - "今日更新" → 取crawl_time的日期部分
+      - "5月9日更新" → 取crawl_time的日期部分，月和日替换为5月9日
+      - "90天前更新" → 取crawl_time的90天前的日期部分
+      - "" → 取crawl_time的日期部分
+    """
+    if not isinstance(update_time, str) or not update_time.strip():
+        return crawl_time.date()
+    
+    if update_time == "今日更新":
+        return crawl_time.date()
+    
+    month_day_match = re.search(r"(\d{1,2})月(\d{1,2})日", update_time)
+    if month_day_match:
+        month = int(month_day_match.group(1))
+        day = int(month_day_match.group(2))
+        # 用爬取时间的年份 + 解析出的月日
+        return date(crawl_time.year, month, day)
+    
+    if "90天前" in update_time:
+        return (crawl_time - pd.Timedelta(days=90)).date()
+    
+    return crawl_time.date()
+
 
 def preprocess_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
@@ -292,6 +320,10 @@ def preprocess_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     logger.info(f"工作时间解析完成: {int(weekend_count)} 条周末双休")
 
     logger.info(f"月薪范围: {df['month_salary_min'].min():,} ~ {df['month_salary_max'].max():,} 元/月")
+
+    df["update_time_parsed"] = df.apply(lambda row: parse_update_time(row["update_time"], row["crawl_time"]), axis=1)
+    update_parsed = (df["update_time_parsed"] != "").sum()
+    logger.info(f"更新时间解析完成: {update_parsed}/{original_count} 条成功")
     return df
 
 

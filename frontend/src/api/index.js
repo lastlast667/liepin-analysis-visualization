@@ -39,6 +39,7 @@ export const analysisAPI = {
   getLocationDistribution: (params) => api.get('/analysis/location/', { params }),
   getSalaryAnalysis: (params) => api.get('/analysis/salary/', { params }),
   searchJobs: (params) => api.get('/analysis/jobs/', { params }),
+  getJobDetail: (id) => api.get(`/analysis/jobs/${id}/`),
 }
 
 export default api

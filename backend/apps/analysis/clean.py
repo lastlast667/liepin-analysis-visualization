@@ -76,6 +76,8 @@ def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
     text_cols = df.select_dtypes(include=["string", "object"]).columns
     for col in text_cols:
+        if col == "job_description":
+            continue
         is_all_string = df[col].apply(lambda x: isinstance(x, str)).all()
         if not is_all_string:
             print(f"列 {col} 包含非字符串类型数据，跳过清洗特殊字符")

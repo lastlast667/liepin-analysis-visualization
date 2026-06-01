@@ -17,24 +17,21 @@
                 </svg>
                 {{ job.salary }}
               </span>
-              <span>·</span>
-              <span>{{ job.location_city }}</span>
-              <span>·</span>
-              <span>{{ job.education }}</span>
-              <span>·</span>
-              <span>{{ job.experience }}</span>
-              <span>·</span>
-              <span>招{{ job.recruit_count }}人</span>
+              <span v-if="job.location_city">· {{ job.location_city }}</span>
+              <span v-if="job.education">· {{ job.education }}</span>
+              <span v-if="job.experience">· {{ job.experience }}</span>
+              <span v-if="job.recruit_count">· {{ job.recruit_count }}</span>
             </div>
             <!-- 行业 / 公司规模 / 周末双休或弹性工作 -->
             <div class="flex items-center gap-3 text-sm text-gray-400">
-              <span>{{ job.company_industry }}</span>
-              <span>·</span>
-              <span>{{ job.company_scale }}</span>
-              <span>·</span>
+              <span v-if="job.company_industry">{{ job.company_industry }}</span>
+              <span v-if="job.company_industry && job.company_scale">·</span>
+              <span v-if="job.company_scale">{{ job.company_scale }}</span>
+              <span v-if="(job.company_industry || job.company_scale) && job.has_weekend_off !== null">·</span>
               <span :class="job.has_weekend_off ? 'text-green-400' : 'text-orange-400'">
                 {{ job.has_weekend_off ? '周末双休' : '弹性工作' }}
               </span>
+              <span v-if="job.update_time_parsed">· {{ job.update_time_parsed }} 更新</span>
             </div>
             
           </div>
@@ -89,11 +86,11 @@
             <p class="text-gray-500">公司名称</p>
             <p class="text-gray-200 font-medium">{{ job.company_name }}</p>
           </div>
-          <div>
+          <div v-if="job.company_industry">
             <p class="text-gray-500">所属行业</p>
             <p class="text-gray-200">{{ job.company_industry }}</p>
           </div>
-          <div>
+          <div v-if="job.company_scale">
             <p class="text-gray-500">公司规模</p>
             <p class="text-gray-200">{{ job.company_scale }}</p>
           </div>
@@ -163,7 +160,7 @@
           </div>
           <div>
             <p class="text-gray-500">高于行业平均</p>
-            <p class="text-green-400 font-semibold">{{ salaryAnalysis.abovePercentage }}%</p>
+            <p class="font-semibold" :class="salaryAnalysis.abovePercentage >= 0 ? 'text-green-400' : 'text-red-400'">{{ salaryAnalysis.abovePercentage >= 0 ? '+' : '' }}{{ salaryAnalysis.abovePercentage }}%</p>
           </div>
           <!-- 薪资范围分布条 -->
           <div>

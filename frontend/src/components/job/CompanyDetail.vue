@@ -13,7 +13,10 @@
             </div>
             <div>
               <h2 class="text-xl font-bold text-gray-100">{{ companyName }}</h2>
-              <p class="text-sm text-gray-400">{{ companyIndustry }} · {{ companyScale }}</p>
+              <p class="text-sm text-gray-400">
+              <template v-if="companyIndustry && companyIndustry !== '--'">{{ companyIndustry }}</template>
+              {{ companyScale }}
+            </p>
             </div>
           </div>
         </div>

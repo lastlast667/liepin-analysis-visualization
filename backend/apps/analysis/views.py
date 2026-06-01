@@ -1,9 +1,11 @@
 from collections import Counter, defaultdict
 
-from django.db.models import Count, Avg
+from django.db.models import Q, Case, Count, Avg, Max, Min, Sum, Value, When
+from django.forms import IntegerField, model_to_dict
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from django.core.cache import cache
 
 from apps.jobs.models import Job
 from utils.load_words_from import load_words_from
@@ -25,7 +27,55 @@ def calc_ratio(count, total):
     # 计算占比，保留1位小数，%表示
     return round(count / total * 100, 1) if total > 0 else 0.0
 
+def get_distinct_options(queryset, field_name):
+    """
+    从查询集中获取指定字段的唯一值，排除空值
+    排序逻辑完全交给前端处理
+
+    Args:
+        queryset: 基础查询集
+        field_name: 要获取的字段名
+
+    Returns:
+        list: 去重后的选项列表
+    """
+    return list(
+        queryset
+        # 同时排除空字符串和NULL两种空值
+        .exclude(**{f"{field_name}__in": ["", None]})
+        # 只取指定字段，返回纯字符串列表
+        .values_list(field_name, flat=True)
+        # 去重
+        .distinct()
+        # 按字段本身排序
+        .order_by(field_name)
+    )
+
+def get_cached_options(base_queryset, field_name, timeout=3600):
+    """
+    带缓存的下拉框选项生成函数
+    排序逻辑完全交给前端处理
+
+    Args:
+        base_queryset: 基础查询集
+        field_name: 要获取的字段名
+        timeout: 缓存过期时间，单位秒，默认1小时
+
+    Returns:
+        list: 去重后的选项列表
+    """
+    # 生成唯一的缓存键
+    cache_key = f"job_options:{field_name}"
     
+    # 先尝试从缓存中获取
+    options = cache.get(cache_key)
+    
+    # 缓存中没有则从数据库查询，并写入缓存
+    if options is None:
+        options = get_distinct_options(base_queryset, field_name)
+        cache.set(cache_key, options, timeout)
+    
+    return options
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
@@ -47,8 +97,10 @@ def company_analysis(request):
     category_param = request.query_params.get("category", "")
     partition_param = request.query_params.get("partition", "")
 
-    # 查询所有数据
+    # 全量数据（用于提取下拉选项和右侧统计栏，不受筛选影响）
     base_queryset = Job.objects.all()
+    # 筛选数据（用于岗位结果）
+    queryset = base_queryset
     
     if category_param:
         categories = [c.strip() for c in category_param.split(",") if c.strip()]
@@ -176,18 +228,8 @@ def company_analysis(request):
     )[:30]
 
     # ── 下拉框选项 ──
-    category_options = list(
-        base_queryset.exclude(category="")
-        .values_list("category", flat=True)
-        .distinct()
-        .order_by("category")
-    )
-    partition_options = list(
-        base_queryset.exclude(location_partition="")
-        .values_list("location_partition", flat=True)
-        .distinct()
-        .order_by("location_partition")
-    )
+    category_options = get_cached_options(base_queryset, "category")
+    partition_options = get_cached_options(base_queryset, "location_partition")
 
     return Response({
         "statistics": {
@@ -306,20 +348,21 @@ def location_distribution(request):
     # ── 主要城市学历要求分布 ──
     national_education = Counter()
     city_education_distribution_raw = defaultdict(Counter)
-
+    # 统计全国和各城市的岗位数，按学历要求分类
     for job in jobs:
         education = job['education']
         city = job['location_city']
         national_education[education] += 1
         city_education_distribution_raw[city][education] += 1
     
+    # 默认全国学历要求分布比例
     city_education_distribution = {
         "全国": {
             education: calc_ratio(count, total_jobs) 
             for education, count in national_education.items()
         }
     }
-
+    # 计算每个城市的学历要求分布比例
     for city, count in city_education_distribution_raw.items():
         sum_count = sum(count.values())
         city_education_distribution[city] = {
@@ -331,19 +374,21 @@ def location_distribution(request):
     national_experience = Counter()
     city_experience_distribution_raw = defaultdict(Counter)
 
+    # 统计全国和各城市的岗位数，按经验等级分类
     for job in jobs:
         experience = job['experience_level']
         city = job['location_city']
         national_experience[experience] += 1
         city_experience_distribution_raw[city][experience] += 1
     
+    # 默认全国经验要求分布比例
     city_experience_distribution = {
         "全国": {
             experience: calc_ratio(count, total_jobs) 
             for experience, count in national_experience.items()
         }
     }
-
+    # 计算每个城市的经验要求分布比例
     for city, count in city_experience_distribution_raw.items():
         sum_count = sum(count.values())
         city_experience_distribution[city] = {
@@ -411,6 +456,12 @@ def job_search(request):
       - city_options: 可选的城市列表
         - 每个城市包含以下字段：
           - city: 城市名称
+      - education_options: 可选的学历要求列表
+        - 每个学历包含以下字段：
+          - education: 学历要求
+      - experience_level_options: 可选的经验等级列表
+        - 每个经验等级包含以下字段：
+          - experience_level: 经验等级
     
       - hot_jobs: 热门岗位列表
         - 每个岗位包含以下字段：
@@ -433,40 +484,159 @@ def job_search(request):
 
     # 获取URL里的参数
     keyword = request.query_params.get("keyword")
-    city = request.query_params.get("city")
+    location_city = request.query_params.get("location_city")
     salary = request.query_params.get("salary")
     education = request.query_params.get("education")
     experience_level = request.query_params.get("experience_level")
-    sort_by = request.query_params.get("sort_by")
-    page = request.query_params.get("page", 1)
-    page_size = request.query_params.get("page_size", 10)
+    company_name = request.query_params.get("company_name")
+    sort_by = request.query_params.get("sort_by", "default")
+    page = int(request.query_params.get("page", 1))
+    page_size = int(request.query_params.get("page_size", 10))
 
-    # 从数据库里查询岗位
-    jobs = Job.objects.all()
+    # 全量数据（用于提取下拉选项和右侧统计栏，不受筛选影响）
+    base_queryset = Job.objects.all()
+    # 筛选数据（用于岗位结果）
+    queryset = base_queryset
+
+    # 筛选公司名称（用于公司详情页）
+    if company_name:
+        queryset = queryset.filter(company_name=company_name)
 
     # 筛选岗位关键词
     if keyword:
-        jobs = jobs.filter(title__icontains=keyword)
+        queryset = queryset.filter(Q(title__icontains=keyword) | Q(company_name__icontains=keyword))
 
-    # if city:
+    # 筛选城市
+    if location_city:
+        queryset = queryset.filter(location_city=location_city)
+
+    # 薪资范围筛选（基于 month_salary_avg 字段做范围过滤）
+    if salary:
+        if salary == "10k以内":
+            queryset = queryset.filter(month_salary_avg__lt=10000)  # 小于10k
+        elif salary == "10-20k":
+            queryset = queryset.filter(month_salary_avg__gte=10000, month_salary_avg__lt=20000)  # 大于等于10k，小于20k
+        elif salary == "20-30k":
+            queryset = queryset.filter(month_salary_avg__gte=20000, month_salary_avg__lt=30000)  # 大于等于20k，小于30k
+        elif salary == "30-50k":
+            queryset = queryset.filter(month_salary_avg__gte=30000, month_salary_avg__lt=50000)  # 大于等于30k，小于50k
+        elif salary == "50k以上":
+            queryset = queryset.filter(month_salary_avg__gte=50000)  # 大于等于50k
+        elif salary == "薪资面议":
+            queryset = queryset.filter(month_salary_avg__isnull=True)  # 空值表示薪资面议
+
+    # 学历筛选
+    if education:
+        queryset = queryset.filter(education=education)
+
+    # 经验筛选
+    if experience_level:
+        queryset = queryset.filter(experience_level=experience_level)
+
+    # 统计岗位总数和总页数
+    total = queryset.count()
+    total_pages = (total + page_size - 1) // page_size
+
+    # 排序
+    education_order = Case(
+        When(education="博士", then=Value(0)),
+        When(education="硕士", then=Value(1)),
+        When(education="统招本科", then=Value(2)),
+        When(education="本科", then=Value(3)),
+        When(education="专科", then=Value(4)),
+        default=Value(5),
+    )
+    experience_order = Case(
+        When(experience_level="5-10年", then=Value(0)),
+        When(experience_level="3-5年", then=Value(1)),
+        When(experience_level="1-3年", then=Value(2)),
+        When(experience_level="应届生", then=Value(3)),
+        When(experience_level="实习生", then=Value(4)),
+        default=Value(5),
+    )
+    sort_mapping = {
+        "default": ["-id"],
+        "salary": ["-month_salary_avg"],
+        "experience": [experience_order],
+        "education": [education_order],
+    }
+    queryset = queryset.order_by(*sort_mapping.get(sort_by, sort_mapping["default"]))
 
     # 分页
-    start = (page - 1) * int(page_size)
-    end = start + int(page_size)
-    jobs = jobs[start:end]
+    start = (page - 1) * page_size
+    end = start + page_size
+    page_queryset = queryset[start:end]
+
+    jobs = list(page_queryset.values(
+        "id", "title", 
+        "company_name", 
+        "salary", 
+        "month_salary_avg", 
+        "location_city", 
+        "education", 
+        "experience", 
+        "experience_level", 
+        "recruit_count", 
+        "recruit_count_parsed", 
+        "company_industry", 
+        "update_time_parsed",
+        ))
+    
+    for job in jobs:
+        job["update_time_parsed"] = job["update_time_parsed"].strftime("%Y-%m-%d")
+    
+    # —— 下拉框选项 ——
+    city_options = get_cached_options(base_queryset, "location_city")
+    education_options = get_cached_options(base_queryset, "education")
+    experience_level_options = get_cached_options(base_queryset, "experience_level")
+
+    # —— 热门岗位列表 Top5 ——
+    hot_jobs = list(
+        base_queryset.values("id", "title", "company_name", "salary", "month_salary_avg")
+        .order_by("-month_salary_avg")[:5]
+    )
+
+    # —— 热门城市列表 Top10 ——    
+    hot_cities_raw = list(base_queryset.values_list("location_city", flat=True))
+    # 统计各城市的岗位数
+    city_distribution_raw = Counter(hot_cities_raw)
+    
+    # 所有城市岗位数降序排序
+    hot_cities = sorted(city_distribution_raw.items(), key=lambda x: x[1], reverse=True)[:10]
+    # 转换为列表，每个元素为字典，包含城市名称和岗位数
+    hot_cities = [{"name": city, "count": count} for city, count in hot_cities]
+
+    # —— 热门公司列表 Top5 ——
+    hot_companies_raw = list(base_queryset.values_list("company_name", flat=True))
+    # 统计各公司的岗位数
+    company_distribution_raw = Counter(hot_companies_raw)
+    
+    # 所有公司岗位数降序排序
+    hot_companies = sorted(company_distribution_raw.items(), key=lambda x: x[1], reverse=True)[:5]
+    # 转换为列表，每个元素为字典，包含公司名称和岗位数
+    hot_companies = [{"name": company, "count": count} for company, count in hot_companies]
 
     return Response({
-        "total": 0, "results": []
-        
+        "total": total, 
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+        "results": jobs,
+        "city_options": city_options,
+        "education_options": education_options,
+        "experience_level_options": experience_level_options,
+        "hot_jobs": hot_jobs,
+        "hot_cities": hot_cities,
+        "hot_companies": hot_companies,
         })
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def job_detail(request, job_id):
     """
-    岗位详情 API（待实现）
+    岗位详情 API
     参数：
-      - job_id: 岗位ID
+      - job_id: 岗位ID（路径参数）
     返回：
       - job_id: 岗位ID
       - title: 岗位标题
@@ -487,7 +657,7 @@ def job_detail(request, job_id):
       - company_tags: 公司标签
       - job_description: 岗位描述
       - language_requirement: 语言要求
-      - update_time: 更新时间
+      - update_time_parsed: 更新时间解析后的日期对象
 
       - company_stats: 公司统计信息
         - job_count: 岗位数量
@@ -507,7 +677,93 @@ def job_detail(request, job_id):
         - range_min: 薪资范围最小值
         - range_max: 薪资范围最大值
     """
-    return Response({"job_id": job_id, "title": "岗位标题", "location_city": "城市", "location_province": "省份", "location_partition": "分区", "education": "学历", "experience_level": "经验", "salary": 0, "salary_range": "薪资范围", "salary_type": "薪资类型", "has_weekend_off": True, "job_url": "https://www.liepin.com/jobs/123456.html"})
+    
+    # 查询岗位详情
+    job = Job.objects.get(id=job_id)
+
+    # —— 岗位详情 ——
+    job_data = {
+        "id": job.id,
+        "title": job.title,
+        "company_name": job.company_name,
+        "salary": job.salary,
+        "month_salary_avg": job.month_salary_avg,
+        "location_city": job.location_city,
+        "education": job.education,
+        "experience": job.experience,
+        "experience_level": job.experience_level,
+        "recruit_count": job.recruit_count,
+        "recruit_count_parsed": job.recruit_count_parsed,
+        "company_industry": job.company_industry,
+        "company_scale": job.company_scale,
+        "company_link": job.company_link,
+        "has_weekend_off": job.has_weekend_off,
+        "job_url": job.job_url,
+        "company_tags": job.company_tags if isinstance(job.company_tags, list) else [],
+        "job_description": job.job_description,
+        "language_requirement": job.language_requirement,
+        "update_time_parsed": job.update_time_parsed.strftime("%Y-%m-%d") if job.update_time_parsed else None,
+    }
+
+    # —— 公司统计信息 ——
+    company_stats = {}
+    # 查询公司下所有岗位
+    company_jobs_qs = Job.objects.filter(company_name=job.company_name)
+    # 统计岗位数量
+    company_job_count = company_jobs_qs.count()
+    # 统计招聘人数
+    company_recruit_total = company_jobs_qs.aggregate(
+        total=Sum("recruit_count_parsed")
+    )["total"] or 0
+    # 统计平均薪资
+    company_avg_salary = company_jobs_qs.aggregate(
+        avg=Avg("month_salary_avg")
+    )["avg"] or 0
+    # 返回公司统计信息
+    company_stats = {
+        "job_count": company_job_count,
+        "recruit_total": company_recruit_total,
+        "avg_salary": round(company_avg_salary, 0),
+    }
+
+    # —— 相似岗位推荐列表（暂用 mock 数据，后续接入可插拔推荐系统） ——
+    similar_jobs = [
+        {
+            "id": 0,
+            "title": "相似岗位推荐",
+            "company_name": "示例公司",
+            "location_city": "示例城市",
+            "salary": "00-00k",
+        }
+    ]
+
+
+    # —— 薪资分析信息 ——
+    # 查询行业下所有岗位
+    industry_jobs_qs = Job.objects.filter(company_industry=job.company_industry)
+    industry_total = industry_jobs_qs.count()
+    # 行业平均薪资
+    industry_avg = industry_jobs_qs.aggregate(avg=Avg("month_salary_avg"))["avg"] or 0
+    # 当前薪资高于行业平均薪资的比例（空值则按0处理）
+    above_percentage = round((job.month_salary_avg - industry_avg) / industry_avg * 100, 1) if industry_avg > 0 and job.month_salary_avg else 0.0
+    # 行业薪资范围
+    salary_range = industry_jobs_qs.aggregate(
+        range_min=Min("month_salary_avg"),
+        range_max=Max("month_salary_avg"),
+    )
+    salary_analysis = {
+        "industry_avg": round(industry_avg, 0),
+        "above_percentage": above_percentage,
+        "range_min": salary_range["range_min"] or 0,
+        "range_max": salary_range["range_max"] or 0,
+    }
+
+    return Response({
+        **job_data,
+        "company_stats": company_stats,
+        "similar_jobs": similar_jobs,
+        "salary_analysis": salary_analysis,
+        })
 
 @api_view(["GET"])
 @permission_classes([AllowAny])

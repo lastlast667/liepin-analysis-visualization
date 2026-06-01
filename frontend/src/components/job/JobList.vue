@@ -28,7 +28,7 @@
                   class="text-base font-semibold text-gray-200 group-hover:text-primary-400 transition-colors cursor-pointer truncate">
                 {{ job.title }}
               </h3>
-              <span class="px-2 py-0.5 rounded text-xs bg-dark-700 text-gray-400 flex-shrink-0">{{ job.company_industry }}</span>
+              <span v-if="job.company_industry" class="px-2 py-0.5 rounded text-xs bg-dark-700 text-gray-400 flex-shrink-0">{{ job.company_industry }}</span>
             </div>
             <!-- 公司名 · 城市 -->
             <p class="text-sm text-gray-500 mb-2">{{ job.company_name }} · {{ job.location_city }}</p>
@@ -42,8 +42,8 @@
               </span>
               <span v-if="job.experience">· {{ job.experience }}</span>
               <span v-if="job.education">· {{ job.education }}</span>
-              <span>· 招{{ job.recruit_count }}人</span>
-              <span>· {{ job.update_time }}</span>
+              <span v-if="job.recruit_count">· {{ job.recruit_count }}</span>
+              <span v-if="job.update_time_parsed">· {{ job.update_time_parsed }} 更新</span>
             </div>
           </div>
           <!-- 收藏按钮（hover 时显示） -->
