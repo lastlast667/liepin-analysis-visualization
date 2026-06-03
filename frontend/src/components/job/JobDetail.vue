@@ -160,7 +160,7 @@
           </div>
           <div>
             <p class="text-gray-500">高于行业平均</p>
-            <p class="font-semibold" :class="salaryAnalysis.abovePercentage >= 0 ? 'text-green-400' : 'text-red-400'">{{ salaryAnalysis.abovePercentage >= 0 ? '+' : '' }}{{ salaryAnalysis.abovePercentage }}%</p>
+            <p class="font-semibold" :class="salaryAnalysis.abovePercentage >= 0 ? 'text-green-400' : 'text-red-400'">{{ salaryAnalysis.abovePercentage >= 0 ? '' : '' }}{{ salaryAnalysis.abovePercentage }}%</p>
           </div>
           <!-- 薪资范围分布条 -->
           <div>

@@ -1,11 +1,19 @@
 from collections import Counter, defaultdict
+from io import BytesIO
+from statistics import median
 
 from django.db.models import Q, Case, Count, Avg, Max, Min, Sum, Value, When
 from django.forms import IntegerField, model_to_dict
+import pandas as pd
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.core.cache import cache
+import base64
+import matplotlib
+matplotlib.use('Agg')  # 使用非交互式后端，避免在Django线程中启动GUI
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 from apps.jobs.models import Job
 from utils.load_words_from import load_words_from
@@ -768,7 +776,228 @@ def job_detail(request, job_id):
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def salary_analysis(request):
-    """薪资分析 API（待实现）"""
-    return Response({"summary": {}, "by_category": [], "by_experience": [], "by_education": []})
+    """
+    薪资分析 API
+    参数：
+    - category: 岗位类别
+    - location_partition: 城市分区
+    返回：
+    - stats: 统计信息
+    - salary_range_distribution: 薪资区间分布
+    - city_salary_ranking: 城市薪资排名
+    - industry_salary_ranking: 行业薪资排名
+    - scale_salary: 公司规模与薪资关系
+    - education_salary: 学历与薪资关系
+    - experience_salary: 经验与薪资关系
+    - category_boxplot: 岗位类别与薪资关系
+    """
+
+    # 获取岗位类别（逗号分隔的多值）
+    category_param = request.query_params.get("category", "")
+    # 获取城市分区（逗号分隔的多值）
+    partition_param = request.query_params.get("location_partition", "")
+
+    # 获取全量数据
+    base_queryset = Job.objects.all()
+    # 筛选数据
+    queryset = base_queryset
+
+    if category_param:
+        categories = [c.strip() for c in category_param.split(",") if c.strip()]
+        if categories:
+            queryset = queryset.filter(category__in=categories)
+    if partition_param:
+        partitions = [p.strip() for p in partition_param.split(",") if p.strip()]
+        if partitions:
+            queryset = queryset.filter(location_partition__in=partitions)
+
+    job_data = list(queryset.values("id", "month_salary_avg", "location_city", "company_industry", "company_scale", "education", "experience_level", "category"))
+
+    # —— 统计信息 ——
+    stats = {}
+    agg_res = queryset.aggregate(avg=Avg("month_salary_avg"), max=Max("month_salary_avg"))
+    avg_salary = agg_res["avg"] or 0
+    max_salary = agg_res["max"] or 0
+    salary_arr = [s for job in job_data if (s := job["month_salary_avg"]) is not None]  # 海象运算符，少一次字典索引
+    # 计算中位数
+    median_salary = median(salary_arr) if salary_arr else 0
+
+    stats["avg_salary"] = round(avg_salary, 0)
+    stats["max_salary"] = round(max_salary, 0)
+    stats["median_salary"] = round(median_salary, 0)
+
+    # —— 薪资区间分布 ——
+    salary_range_distribution_dict = {
+    "0-10k": 0,
+    "10k-20k": 0,
+    "20k-30k": 0,
+    "30k-50k": 0,
+    "50k+": 0
+    }
+    for job in job_data:
+        salary = job["month_salary_avg"]
+        if salary is None:
+            continue
+        if 0 < salary <= 10000:
+            salary_range_distribution_dict["0-10k"] += 1
+        elif 10000 < salary <= 20000:
+            salary_range_distribution_dict["10k-20k"] += 1
+        elif 20000 < salary <= 30000:
+            salary_range_distribution_dict["20k-30k"] += 1
+        elif 30000 < salary <= 50000:
+            salary_range_distribution_dict["30k-50k"] += 1
+        elif salary > 50000:
+            salary_range_distribution_dict["50k+"] += 1
+
+    salary_range_distribution = [{"range": k, "count": v} for k, v in salary_range_distribution_dict.items()]
+        
+    # —— 城市薪资排名 ——
+    city_salary_ranking_dict = queryset.order_by().values("location_city").annotate(avg=Avg("month_salary_avg")).order_by("-avg")
+    city_salary_ranking = [{"city": item["location_city"], "avg_salary": round(item["avg"] or 0)} for item in city_salary_ranking_dict]
+
+    # —— 行业薪资排名 ——
+    industry_salary_ranking_dict = queryset.order_by().values("company_industry").annotate(avg=Avg("month_salary_avg")).order_by("-avg")
+    industry_salary_ranking = [{"industry": item["company_industry"], "avg_salary": round(item["avg"] or 0)} for item in industry_salary_ranking_dict]
+
+    # —— 公司规模与薪资关系 ——
+    scale_salary_dict = queryset.order_by().values("company_scale").annotate(avg=Avg("month_salary_avg")).order_by("-avg")
+    scale_salary = [{"scale": item["company_scale"], "avg_salary": round(item["avg"] or 0)} for item in scale_salary_dict]
+
+    # —— 学历与薪资关系 ——
+    education_salary_dict = queryset.order_by().values("education").annotate(avg=Avg("month_salary_avg")).order_by("-avg")
+    education_salary = [{"education": item["education"], "avg_salary": round(item["avg"] or 0)} for item in education_salary_dict]
+
+    # —— 经验与薪资关系 ——
+    experience_salary_dict = queryset.order_by().values("experience_level").annotate(avg=Avg("month_salary_avg")).order_by("-avg")
+    experience_salary = [{"experience_level": item["experience_level"], "avg_salary": round(item["avg"] or 0)} for item in experience_salary_dict]
+
+    # —— 岗位类别与薪资关系 ——
+    # 计算各类别的min，q1，median，q3，max
+    all_data = pd.DataFrame(base_queryset.values("category", "month_salary_avg"))
+    all_data = all_data.dropna(subset=["month_salary_avg"])  # 移除空值
+    all_data["month_salary_avg"] = all_data["month_salary_avg"] / 1000  # 统一转为K单位
+    category_boxplot = []
+    for category, group in all_data.groupby("category"):
+        salary_series = group["month_salary_avg"]
+        category_boxplot.append({
+            "category": category,
+            "min": round(salary_series.min(), 0),
+            "q1": round(salary_series.quantile(0.25), 0),
+            "median": round(salary_series.median(), 0),
+            "q3": round(salary_series.quantile(0.75), 0),
+            "max": round(salary_series.max(), 0),
+        })
+
+    # 解决中文+负号乱码（必须在 sns.set_style 之后设置，否则会被覆盖）
+    plt.rcParams["font.sans-serif"] = ["SimHei"]
+    plt.rcParams["font.family"] = "sans-serif"
+    plt.rcParams["axes.unicode_minus"] = False
+
+    # —— 周末双休与薪资关系 ——
+    # 绘制分组堆叠柱状图
+    all_data_weekend_off = pd.DataFrame(queryset.values("has_weekend_off", "month_salary_avg")).dropna(subset=["month_salary_avg"])
+    all_data_weekend_off["month_salary_avg"] = all_data_weekend_off["month_salary_avg"] / 1000
+
+    # 画布尺寸、整体风格
+    plt.figure(figsize=(16,8))
+    sns.set_style("whitegrid") # 白底细网格，清爽美观
+    # set_style 会重置字体，重新设置
+    plt.rcParams["font.sans-serif"] = ["SimHei"]
+    plt.rcParams["font.family"] = "sans-serif"
+    plt.rcParams["axes.unicode_minus"] = False
+
+    # 配色：双休#4A90E2(天蓝)、非双休#E67E22(暖橙)，透明度优化
+    sns.histplot(
+        x="month_salary_avg",
+        hue="has_weekend_off",
+        data=all_data_weekend_off,
+        kde=True,
+        palette=["#4A90E2", "#E67E22"],
+        alpha=0.65, # 柱状半透明不遮挡
+        edgecolor="#ffffff", # 柱子白边框区分
+        linewidth=0.8
+    )
+
+    # 标题、坐标轴美化
+    plt.title("周末双休 vs 非双休岗位薪资分布", fontsize=32, pad=18)
+    plt.xlabel("月薪（K）", fontsize=24, labelpad=18)
+    plt.ylabel("岗位数量", fontsize=24, labelpad=18)
+    plt.xticks(fontsize=24)
+    plt.yticks(fontsize=24)
+
+    # 图例美化（位置右上、去掉边框）
+    leg = plt.legend(["周末双休", "非周末双休"], loc="upper right", frameon=False, fontsize=20)
+
+    # 去掉顶部、右侧多余边框
+    sns.despine(top=True, right=True)
+    plt.tight_layout()
+
+    # 后续base64生成图片代码不变
+    buf = BytesIO()
+    plt.savefig(buf, format='png', dpi=150, bbox_inches='tight')
+    buf.seek(0)
+    weekend_off_salary_image = base64.b64encode(buf.getvalue()).decode('utf-8')
+    weekend_off_salary_image = f"data:image/png;base64,{weekend_off_salary_image}"
+    plt.close()  # 必须关闭，防止内存泄漏
+
+    # —— 外语要求与薪资关系 ——
+    # 绘制分组堆叠柱状图
+    all_data_language = pd.DataFrame(queryset.values("has_language_requirement", "month_salary_avg")).dropna(subset=["month_salary_avg"])
+    all_data_language["month_salary_avg"] = all_data_language["month_salary_avg"] / 1000    
+
+    # 画布尺寸、整体风格
+    plt.figure(figsize=(16,8))
+    sns.set_style("whitegrid") # 白底细网格，清爽美观
+    # set_style 会重置字体，重新设置
+    plt.rcParams["font.sans-serif"] = ["SimHei"]
+    plt.rcParams["font.family"] = "sans-serif"
+    plt.rcParams["axes.unicode_minus"] = False
+
+    # 配色：双休#4A90E2(天蓝)、非双休#E67E22(暖橙)，透明度优化
+    sns.histplot(
+        x="month_salary_avg",
+        hue="has_language_requirement",
+        data=all_data_language,
+        kde=True,
+        palette=["#4A90E2", "#E67E22"],
+        alpha=0.65, # 柱状半透明不遮挡
+        edgecolor="#ffffff", # 柱子白边框区分
+        linewidth=0.8
+    )
+
+    # 标题、坐标轴美化
+    plt.title("外语要求与薪资分布", fontsize=32, pad=18)
+    plt.xlabel("月薪（K）", fontsize=24, labelpad=18)
+    plt.ylabel("岗位数量", fontsize=24, labelpad=18)
+    plt.xticks(fontsize=24)
+    plt.yticks(fontsize=24)
+
+    # 图例美化（位置右上、去掉边框）
+    leg = plt.legend(["外语要求", "无外语要求"], loc="upper right", frameon=False, fontsize=20)
+
+    # 去掉顶部、右侧多余边框
+    sns.despine(top=True, right=True)
+    plt.tight_layout()
+
+    # 后续base64生成图片代码不变
+    buf = BytesIO()
+    plt.savefig(buf, format='png', dpi=150, bbox_inches='tight')
+    buf.seek(0)
+    language_salary_image = base64.b64encode(buf.getvalue()).decode('utf-8')
+    language_salary_image = f"data:image/png;base64,{language_salary_image}"
+    plt.close()  # 必须关闭，防止内存泄漏
+    
+    return Response({
+        "stats": stats,
+        "salary_range_distribution": salary_range_distribution,
+        "city_salary_ranking": city_salary_ranking,
+        "industry_salary_ranking": industry_salary_ranking,
+        "scale_salary": scale_salary,
+        "education_salary": education_salary,
+        "experience_salary": experience_salary,
+        "weekend_off_boxplot": weekend_off_salary_image,
+        "language_boxplot": language_salary_image,
+        "category_boxplot": category_boxplot
+    })
 
 
