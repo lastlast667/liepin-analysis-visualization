@@ -42,4 +42,11 @@ export const analysisAPI = {
   getJobDetail: (id) => api.get(`/analysis/jobs/${id}/`),
 }
 
+export const mlAPI = {
+  getMatchOptions: () => api.get('/ml/resume-match/options/'),
+  matchResume: (formData) => api.post('/ml/resume-match/', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
+}
+
 export default api

@@ -56,9 +56,10 @@ def vectorize_text(tokenized_words: list[list[str]] | list[str],category: list[s
 
         vectorizer = TfidfVectorizer(
             max_features=3000,  # 控制词汇表大小
-            ngram_range=(1, 2), # 控制词组合
+            ngram_range=(1, 1), # 控制词组合
             min_df=2,           # 过滤低频词
-            max_df=0.9          # 过滤高频词
+            max_df=0.9,         # 过滤高频词
+            sublinear_tf=True,  # 抑制高频词权重
         )
         X = vectorizer.fit_transform(documents)
         logger.info(f"TF-IDF向量化完成，共{X.shape[0]}条数据，{X.shape[1]}个特征，{len(label_encoder.classes_)}个类别")
@@ -71,7 +72,7 @@ def vectorize_text(tokenized_words: list[list[str]] | list[str],category: list[s
         encoder_path = MODEL_DIR / "label_encoder.pkl"
         with open(encoder_path, "wb") as f:
             pickle.dump(label_encoder, f)
-        logger.info(f"已保存 标签编码器 到 {encoder_path}")
+        logger.info(f"已保存 标签编码器 到 {encoder_path}") # 映射结果：{"数据分析":0, "后端开发":1, "前端开发":2, "产品经理":3}
 
         feature_names = vectorizer.get_feature_names_out().tolist()
         vocab_path = PROCESSED_DATA_DIR / "tfidf_vocab.json"

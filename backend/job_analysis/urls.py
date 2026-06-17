@@ -11,4 +11,5 @@ urlpatterns = [
     # API
     path("api/auth/", include("apps.users.urls")),
     path("api/analysis/", include("apps.analysis.urls")),
+    path("api/ml/", include("apps.ml_models.urls")),
 ]

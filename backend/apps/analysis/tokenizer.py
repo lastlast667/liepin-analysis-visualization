@@ -43,9 +43,9 @@ def tokenize(text: str, stopwords: set[str]) -> list[str]:
 
 def tokenize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """
-    对 DataFrame 中的 title 和 job_description 进行分词，生成 tokenized_words 列
+    对 DataFrame 中的 job_description 进行分词，生成 tokenized_words 列
 
-    :param df: 包含 title 和 job_description 列的 DataFrame
+    :param df: 包含 job_description 列的 DataFrame
     :return: 新增 tokenized_words 列的 DataFrame
     """
     stopwords = set(load_stopwords())
@@ -60,10 +60,9 @@ def tokenize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
     tokenized_list = []
     for _, row in df.iterrows():
-        # 处理 title 和 job_description 列缺失值，避免 KeyErrors，合并为一个字符串
-        title = str(row.get("title", "")) if pd.notna(row.get("title")) else ""
+        # 处理 job_description 列缺失值，避免 KeyErrors，合并为一个字符串
         job_description = str(row.get("job_description", "")) if pd.notna(row.get("job_description")) else ""
-        combined_text = title + " " + job_description
+        combined_text = job_description
         # 对合并后的文本进行分词
         tokens = tokenize(combined_text, stopwords)
         tokenized_list.append(" ".join(tokens))
@@ -73,6 +72,9 @@ def tokenize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def tokenize_data(data_path: str | Path) -> pd.DataFrame:
+    """
+    对数据文件进行分词处理
+    """
     df = pd.read_csv(data_path)
     return tokenize_dataframe(df)
 

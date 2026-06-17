@@ -29,6 +29,8 @@
                 {{ job.title }}
               </h3>
               <span v-if="job.company_industry" class="px-2 py-0.5 rounded text-xs bg-dark-700 text-gray-400 flex-shrink-0">{{ job.company_industry }}</span>
+              <span v-if="showRemoteBadge && job.is_remote"
+                    class="px-2 py-0.5 rounded text-xs bg-orange-500/20 text-orange-400 border border-orange-500/30 shrink-0">异地岗位</span>
             </div>
             <!-- 公司名 · 城市 -->
             <p class="text-sm text-gray-500 mb-2">{{ job.company_name }} · {{ job.location_city }}</p>
@@ -45,6 +47,13 @@
               <span v-if="job.recruit_count">· {{ job.recruit_count }}</span>
               <span v-if="job.update_time_parsed">· {{ job.update_time_parsed }} 更新</span>
             </div>
+          </div>
+          <!-- 匹配度（仅简历匹配页面使用） -->
+          <div v-if="showMatchScore && job.match_score != null" class="text-center shrink-0 ml-3">
+            <div class="w-14 h-14 rounded-full bg-gradient-to-br from-accent-500 to-accent-600 flex items-center justify-center">
+              <span class="text-lg font-bold text-white">{{ job.match_score }}%</span>
+            </div>
+            <span class="text-xs text-gray-500 mt-1 block">匹配度</span>
           </div>
           <!-- 收藏按钮（hover 时显示） -->
           <button @click.stop="$emit('toggle-favorite', job)"
@@ -106,6 +115,8 @@ const props = defineProps({
   currentPage: { type: Number, default: 1 },
   totalPages: { type: Number, default: 1 },
   favoriteIds: { type: Set, default: () => new Set() },
+  showMatchScore: { type: Boolean, default: false },
+  showRemoteBadge: { type: Boolean, default: false },
 })
 
 defineEmits(['view-job', 'toggle-favorite', 'page-change'])
