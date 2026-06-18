@@ -1,3 +1,10 @@
+"""
+分析报告序列化器，负责数据校验（请求进来时）和数据格式转换（返回响应时）
+数据校验：
+前端发来的参数对不对？比如 page 必须是整数、 salary_min 必须是浮点数——Serializer 帮你自动校验，不用手写一堆 if not isinstance(...) 。
+数据格式转换：
+Python 的 datetime 、 Decimal 、模型对象这些类型不能直接 JSON 序列化。Serializer 帮你把它们转成 JSON 能认的格式。
+"""
 from rest_framework import serializers
 from .models import AnalysisReport
 from apps.jobs.models import Job

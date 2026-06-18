@@ -119,7 +119,7 @@
 
                 <!-- 行业偏好 -->
                 <div class="relative" ref="industryRef">
-                  <label class="block text-sm text-gray-400 mb-2">行业偏好</label>
+                  <label class="block text-sm text-gray-400 mb-2">公司行业偏好</label>
                   <div @click="industryOpen = !industryOpen" class="glass-input w-full cursor-pointer flex items-center justify-between">
                     <span class="truncate text-sm" :class="selectedIndustryLabel ? 'text-gray-100' : 'text-gray-500'">
                       {{ selectedIndustryLabel || '不限' }}

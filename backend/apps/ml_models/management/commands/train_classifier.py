@@ -1,10 +1,8 @@
 # 离线训练，python manage.py
 """
 训练分类器
-
 """
 import pickle
-
 from django.core.management.base import BaseCommand
 from sklearn.metrics import accuracy_score
 from sklearn.linear_model import LogisticRegression

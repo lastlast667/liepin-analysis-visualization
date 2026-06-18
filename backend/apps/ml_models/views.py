@@ -1,19 +1,19 @@
 import json
-
 import tempfile
 from pathlib import Path
-
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from apps.analysis.views import get_distinct_options
-
-
 from apps.ml_models import matcher
+from apps.ml_models.salary_predict import predict
 from utils.extract_text import extract_pdf_text, extract_docx_text, extract_doc_text
-
 from apps.jobs.models import Job
+import pickle
+from job_analysis.app_config import MODEL_DIR
+
+
 
 def extract_text_from_file(uploaded_file):
     """
@@ -86,3 +86,45 @@ def match_resume(request):
     return Response({
         'results': results,
     })
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def salary_predict_options(request):
+    """
+    预测薪资选项
+    """
+    base_request = Job.objects.all()
+
+    # 从训练模型的元数据中获取数据集大小
+    try:
+        with open(MODEL_DIR / "salary_predict_meta.pkl", "rb") as f:
+            salary_meta = pickle.load(f)
+        model_info = {
+            "data_count": salary_meta.get("data_count", "--"),
+            "r2": salary_meta.get('r2', '--'),
+            "mae": salary_meta.get('mae', '--'),
+        }
+    except FileNotFoundError:
+        model_info = {"data_count": '--', "r2": '--', "mae": '--'}
+
+    return Response({
+        'cities': get_distinct_options(base_request, 'location_city'),
+        'categories': get_distinct_options(base_request, 'category'),
+        'experience_levels': get_distinct_options(base_request, 'experience_level'),
+        'educations': get_distinct_options(base_request, 'education'),
+        'company_scales': get_distinct_options(base_request, 'company_scale'),
+        'company_industries': get_distinct_options(base_request, 'company_industry'),
+        'model_info': model_info,
+    })
+
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def salary_predict(request):
+    """
+    预测薪资
+    """
+    params = request.data
+    result = predict(params)
+    return Response(result)

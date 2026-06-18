@@ -47,6 +47,8 @@ export const mlAPI = {
   matchResume: (formData) => api.post('/ml/resume-match/', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   }),
+  getSalaryPredictOptions: () => api.get('/ml/salary-predict/options/'),
+  predictSalary: (data) => api.post('/ml/salary-predict/', data),
 }
 
 export default api
