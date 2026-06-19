@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from django.core.cache import cache
 import base64
 import matplotlib
+from apps.analysis.recommenders.engine import recommend
 matplotlib.use('Agg')  # 使用非交互式后端，避免在Django线程中启动GUI
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -734,17 +735,9 @@ def job_detail(request, job_id):
         "avg_salary": round(company_avg_salary, 0),
     }
 
-    # —— 相似岗位推荐列表（暂用 mock 数据，后续接入可插拔推荐系统） ——
-    similar_jobs = [
-        {
-            "id": 0,
-            "title": "相似岗位推荐",
-            "company_name": "示例公司",
-            "location_city": "示例城市",
-            "salary": "00-00k",
-        }
-    ]
-
+    # —— 相似岗位推荐列表（可插拔推荐系统） ——
+    # 调用推荐引擎获取相似岗位
+    similar_jobs = recommend(job, top_k=5)
 
     # —— 薪资分析信息 ——
     # 查询行业下所有岗位
