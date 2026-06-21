@@ -161,10 +161,17 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.AllowAny",
     ],
 
-    # 响应渲染器（支持JSON和浏览器API界面）
+    # 响应渲染器（djangorestframework-camel-case 自动 snake_case → camelCase）
     "DEFAULT_RENDERER_CLASSES": [
-        "rest_framework.renderers.JSONRenderer",
-        "rest_framework.renderers.BrowsableAPIRenderer",
+        "djangorestframework_camel_case.render.CamelCaseJSONRenderer",
+        "djangorestframework_camel_case.render.CamelCaseBrowsableAPIRenderer",
+    ],
+
+    # 请求解析器（自动 camelCase → snake_case，前端发驼峰后端自动转下划线）
+    "DEFAULT_PARSER_CLASSES": [
+        "djangorestframework_camel_case.parser.CamelCaseJSONParser",
+        "djangorestframework_camel_case.parser.CamelCaseFormParser",
+        "djangorestframework_camel_case.parser.CamelCaseMultiPartParser",
     ],
 
     # 日期时间格式统一
@@ -182,14 +189,9 @@ SIMPLEUI_ANALYSIS = False
 
 SIMPLEUI_CONFIG = {
     "system_keep": False,
-    "menu_display": ["仪表盘", "用户中心", "岗位数据", "数据分析", "机器学习", "爬虫中心", "AI 客服", "系统管理"],
+    "menu_display": ["用户中心", "岗位数据"],
     "dynamic": True,
     "menus": [
-        {
-            "name": "仪表盘",
-            "icon": "fas fa-chart-line",
-            "url": "/admin/dashboard/",
-        },
         {
             "app": "users",
             "name": "用户中心",
@@ -207,50 +209,6 @@ SIMPLEUI_CONFIG = {
             "icon": "fas fa-briefcase",
             "models": [
                 {"name": "岗位列表", "icon": "fas fa-list", "url": "jobs/job/"},
-            ],
-        },
-        {
-            "app": "analysis",
-            "name": "数据分析",
-            "icon": "fas fa-chart-bar",
-            "models": [
-                {"name": "分析报告", "icon": "fas fa-file-alt", "url": "analysis/analysisreport/"},
-            ],
-        },
-        {
-            "app": "ml_models",
-            "name": "机器学习",
-            "icon": "fas fa-brain",
-            "models": [
-                {"name": "模型列表", "icon": "fas fa-cube", "url": "ml_models/mlmodel/"},
-                {"name": "薪资预测", "icon": "fas fa-dollar-sign", "url": "ml_models/salaryprediction/"},
-                {"name": "推荐记录", "icon": "fas fa-thumbs-up", "url": "ml_models/recommendationlog/"},
-                {"name": "简历匹配", "icon": "fas fa-file-invoice", "url": "ml_models/resumematchresult/"},
-            ],
-        },
-        {
-            "app": "spider",
-            "name": "爬虫中心",
-            "icon": "fas fa-server",
-            "models": [
-                {"name": "爬虫任务", "icon": "fas fa-tasks", "url": "spider/spidertask/"},
-                {"name": "爬虫控制台", "icon": "fas fa-play-circle", "url": "/admin/spider-control/"},
-            ],
-        },
-        {
-            "app": "ai_chat",
-            "name": "AI 客服",
-            "icon": "fas fa-comments",
-            "models": [
-                {"name": "对话记录", "icon": "fas fa-comment-dots", "url": "ai_chat/chatmessage/"},
-            ],
-        },
-        {
-            "name": "系统管理",
-            "icon": "fas fa-cog",
-            "models": [
-                {"name": "用户", "icon": "fas fa-user", "url": "auth/user/"},
-                {"name": "组", "icon": "fas fa-users-cog", "url": "auth/group/"},
             ],
         },
     ],

@@ -342,24 +342,24 @@ async function fetchLocationData() {
 
     // stats
     const s = data.statistics
-    stats.totalCities = s.total_cities
-    stats.firstTierPercentage = s.first_tier_ratio
-    stats.firstTierTopCity = s.first_tier_top_city
-    stats.newFirstTierPercentage = s.new_first_tier_ratio
-    stats.newFirstTierTopCity = s.new_first_tier_top_city
-    stats.otherPercentage = s.other_ratio
-    stats.otherTopCity = s.other_top_city
+    stats.totalCities = s.totalCities
+    stats.firstTierPercentage = s.firstTierRatio
+    stats.firstTierTopCity = s.firstTierTopCity
+    stats.newFirstTierPercentage = s.newFirstTierRatio
+    stats.newFirstTierTopCity = s.newFirstTierTopCity
+    stats.otherPercentage = s.otherRatio
+    stats.otherTopCity = s.otherTopCity
 
     const ratios = [
-      { name: s.first_tier_ratio, label: '一线' },
-      { name: s.new_first_tier_ratio, label: '新一线' },
-      { name: s.other_ratio, label: '其他' },
+      { name: s.firstTierRatio, label: '一线' },
+      { name: s.newFirstTierRatio, label: '新一线' },
+      { name: s.otherRatio, label: '其他' },
     ]
     ratios.sort((a, b) => b.name - a.name)
     stats.cityType = `以${ratios[0].label}城市为主`
 
     // regionData
-    const partitionRatio = data.partition_distribution || s.location_partition_ratio || {}
+    const partitionRatio = data.partitionDistribution || s.locationPartitionRatio || {}
     regionData.value = Object.entries(partitionRatio).map(([name, percentage]) => ({
       name,
       percentage,
@@ -367,26 +367,26 @@ async function fetchLocationData() {
     }))
 
     // provinceData
-    provinceData.value = data.province_distribution || []
+    provinceData.value = data.provinceDistribution || []
     if (provinceData.value.length > 0) {
       maxProvinceValue.value = Math.max(...provinceData.value.map(p => p.value))
     }
 
     // cityByProvince
-    cityByProvince.value = data.province_city_distribution || {}
+    cityByProvince.value = data.provinceCityDistribution || {}
 
     // cityTopAllData
-    cityTopAllData.value = data.city_jobs_distribution || []
+    cityTopAllData.value = data.cityJobsDistribution || []
 
     // cityOptions for filters
-    const eduCities = Object.keys(data.city_education_distribution || {}).filter(c => c !== '全国')
+    const eduCities = Object.keys(data.cityEducationDistribution || {}).filter(c => c !== '全国')
     cityOptions.value = eduCities
 
     // educationData
-    educationData.value = data.city_education_distribution || {}
+    educationData.value = data.cityEducationDistribution || {}
 
     // experienceData
-    experienceData.value = data.city_experience_distribution || {}
+    experienceData.value = data.cityExperienceDistribution || {}
 
     chartKey.value++
   } catch (e) {

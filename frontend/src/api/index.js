@@ -32,6 +32,15 @@ export const authAPI = {
   register: (data) => api.post('/auth/register/', data),
   logout: () => api.post('/auth/logout/'),
   getUser: () => api.get('/auth/user/'),
+  getFavorites: () => api.get('/auth/favorites/'),
+  addFavorite: (data) => api.post('/auth/favorites/', data),
+  removeFavorite: (id) => api.delete(`/auth/favorites/${id}/`),
+  getBrowseHistory: () => api.get('/auth/browse-history/'),
+  recordBrowseHistory: (data) => api.post('/auth/browse-history/', data),
+  getProfile: () => api.get('/auth/profile/'),
+  updateProfile: (data) => api.put('/auth/profile/', data),
+  updateUser: (data) => api.put('/auth/user/', data),
+  changePassword: (data) => api.put('/auth/password/', data),
 }
 
 export const analysisAPI = {
@@ -49,6 +58,15 @@ export const mlAPI = {
   }),
   getSalaryPredictOptions: () => api.get('/ml/salary-predict/options/'),
   predictSalary: (data) => api.post('/ml/salary-predict/', data),
+  getRecommendations: (params) => api.get('/ml/recommend/', { params }),
+}
+
+export const adminAPI = {
+  getStats: () => api.get('/auth/admin/stats/'),
+  getUsers: (params) => api.get('/auth/admin/users/', { params }),
+  deleteUser: (id) => api.delete(`/auth/admin/users/${id}/`),
+  getJobs: (params) => api.get('/auth/admin/jobs/', { params }),
+  deleteJob: (id) => api.delete(`/auth/admin/jobs/${id}/`),
 }
 
 export default api

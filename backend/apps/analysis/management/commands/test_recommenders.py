@@ -1,5 +1,5 @@
 """
-测试推荐器
+测试推荐器，一次性测试三个推荐器
 
 用法：python manage.py test_recommenders --job-id=42
 """
@@ -26,9 +26,9 @@ class Command(BaseCommand):
         
         # 注册所有推荐器
         RecommenderRegistry.clear()
-        RecommenderRegistry.register(CategoryBasedRecommender())
-        RecommenderRegistry.register(RuleBasedRecommender())
-        RecommenderRegistry.register(CompanyBasedRecommender())
+        RecommenderRegistry.register(CategoryBasedRecommender())    # 基于类别推荐器
+        RecommenderRegistry.register(RuleBasedRecommender())        # 基于规则推荐器
+        RecommenderRegistry.register(CompanyBasedRecommender())    # 基于公司推荐器
 
         self.stdout.write(f"\n====== 当前岗位：{job.title} （ID={job.id}）======")
         self.stdout.write(f"类别：{job.category}")

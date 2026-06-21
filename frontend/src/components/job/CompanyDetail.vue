@@ -89,11 +89,11 @@ defineEmits(['view-job', 'toggle-favorite', 'back'])
 
 /** 从第一个岗位中获取公司行业和规模信息 */
 const companyIndustry = computed(() => {
-  return props.companyJobs.length > 0 ? props.companyJobs[0].company_industry : '--'
+  return props.companyJobs.length > 0 ? props.companyJobs[0].companyIndustry : '--'
 })
 
 const companyScale = computed(() => {
-  return props.companyJobs.length > 0 ? props.companyJobs[0].company_scale : '--'
+  return props.companyJobs.length > 0 ? props.companyJobs[0].companyScale : '--'
 })
 
 /**

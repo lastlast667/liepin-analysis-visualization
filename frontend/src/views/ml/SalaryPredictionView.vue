@@ -52,7 +52,7 @@
               <label class="block text-sm text-gray-400 mb-2">公司行业</label>
               <select v-model="form.company_industry" class="glass-input w-full">
                 <option value="">请选择行业</option>
-                <option v-for="ind in options.company_industries" :key="ind" :value="ind">{{ ind }}</option>
+                <option v-for="ind in options.companyIndustries" :key="ind" :value="ind">{{ ind }}</option>
               </select>
             </div>
             <button @click="predictSalary" :disabled="!canPredict" class="btn-primary w-full">开始预测</button>
@@ -64,11 +64,11 @@
           <div class="space-y-3">
             <div class="flex items-center justify-between text-sm">
               <span class="text-gray-500">模型类型</span>
-              <span class="text-gray-300">{{ predictedResult.model_used || '随机森林 / CatBoost' }}</span>
+              <span class="text-gray-300">{{ predictedResult.modelUsed || '随机森林 / CatBoost' }}</span>
             </div>
             <div class="flex items-center justify-between text-sm">
               <span class="text-gray-500">训练数据</span>
-              <span class="text-gray-300">{{ modelInfo.data_count }} 条</span>
+              <span class="text-gray-300">{{ modelInfo.dataCount }} 条</span>
             </div>
             <div class="flex items-center justify-between text-sm">
               <span class="text-gray-500">R² 得分</span>
@@ -108,21 +108,21 @@
           <div v-else class="space-y-6">
             <div class="text-center p-6">
               <p class="text-sm text-gray-500 mb-2">预测月薪</p>
-              <div class="text-4xl font-bold text-gradient mb-2">{{ formatSalary(predictedResult.predicted_salary) }}</div>
+              <div class="text-4xl font-bold text-gradient mb-2">{{ formatSalary(predictedResult.predictedSalary) }}</div>
               <p class="text-xs text-gray-500 mt-1">基于 {{ form.location_city }} · {{ form.category }} · {{ form.experience_level }}</p>
             </div>
             <div class="grid grid-cols-3 gap-4">
               <div class="text-center p-4 rounded-xl bg-dark-800/50">
                 <p class="text-xs text-gray-500 mb-1">最低估计</p>
-                <p class="text-lg font-semibold text-gray-300">{{ formatSalary(predictedResult.predicted_min) }}</p>
+                <p class="text-lg font-semibold text-gray-300">{{ formatSalary(predictedResult.predictedMin) }}</p>
               </div>
               <div class="text-center p-4 rounded-xl bg-dark-800/50">
                 <p class="text-xs text-gray-500 mb-1">预计月薪</p>
-                <p class="text-lg font-semibold text-accent-400">{{ formatSalary(predictedResult.predicted_salary) }}</p>
+                <p class="text-lg font-semibold text-accent-400">{{ formatSalary(predictedResult.predictedSalary) }}</p>
               </div>
               <div class="text-center p-4 rounded-xl bg-dark-800/50">
                 <p class="text-xs text-gray-500 mb-1">最高估计</p>
-                <p class="text-lg font-semibold text-gray-300">{{ formatSalary(predictedResult.predicted_max) }}</p>
+                <p class="text-lg font-semibold text-gray-300">{{ formatSalary(predictedResult.predictedMax) }}</p>
               </div>
             </div>
           </div>
@@ -162,14 +162,14 @@ import { mlAPI } from '@/api/index.js'
 const options = reactive({
   cities: [],
   categories: [],
-  experience_levels: [],
+  experienceLevels: [],
   educations: [],
-  company_scales: [],
-  company_industries: [],
+  companyScales: [],
+  companyIndustries: [],
 })
 
 const modelInfo = reactive({
-  data_count: '--',
+  dataCount: '--',
   r2: '--',
   mae: '--',
 })
@@ -179,14 +179,14 @@ async function fetchOptions() {
     const res = await mlAPI.getSalaryPredictOptions()
     options.cities = res.data.cities || []
     options.categories = res.data.categories || []
-    options.experience_levels = res.data.experience_levels || []
+    options.experienceLevels = res.data.experienceLevels || []
     options.educations = res.data.educations || []
-    options.company_scales = res.data.company_scales || []
-    options.company_industries = res.data.company_industries || []
-    if (res.data.model_info) {
-      modelInfo.data_count = res.data.model_info.data_count ?? '--'
-      modelInfo.r2 = res.data.model_info.r2 ?? '--'
-      modelInfo.mae = res.data.model_info.mae ?? '--'
+    options.companyScales = res.data.companyScales || []
+    options.companyIndustries = res.data.companyIndustries || []
+    if (res.data.modelInfo) {
+      modelInfo.dataCount = res.data.modelInfo.dataCount ?? '--'
+      modelInfo.r2 = res.data.modelInfo.r2 ?? '--'
+      modelInfo.mae = res.data.modelInfo.mae ?? '--'
     }
   } catch (e) {
     console.error('加载预测选项失败', e)
@@ -214,9 +214,9 @@ function _sortByOrder(list, order) {
   })
 }
 
-const sortedExpLevels = computed(() => _sortByOrder(options.experience_levels, EXP_ORDER))
+const sortedExpLevels = computed(() => _sortByOrder(options.experienceLevels, EXP_ORDER))
 const sortedEducations = computed(() => _sortByOrder(options.educations, EDU_ORDER))
-const sortedScales = computed(() => _sortByOrder(options.company_scales, SCALE_ORDER))
+const sortedScales = computed(() => _sortByOrder(options.companyScales, SCALE_ORDER))
 
 // ── 表单 ──
 const form = reactive({
@@ -235,19 +235,19 @@ const canPredict = computed(() => {
 // ── 预测 ──
 const predicted = ref(false)
 const loading = ref(false)
-const predictedResult = ref({ predicted_salary: null })
+const predictedResult = ref({ predictedSalary: null })
 const factors = ref([])
 
 /** 特征列名 → 中文映射 */
 const FEATURE_NAME_MAP = {
   category: '岗位类别',
-  location_city: '城市',
-  company_industry: '公司行业',
-  exp_numeric: '经验年限',
-  edu_numeric: '学历',
-  company_scale_min: '公司规模',
-  company_scale_max: '公司规模',
-  has_weekend_off: '是否双休',
+  locationCity: '城市',
+  companyIndustry: '公司行业',
+  expNumeric: '经验年限',
+  eduNumeric: '学历',
+  companyScaleMin: '公司规模',
+  companyScaleMax: '公司规模',
+  hasWeekendOff: '是否双休',
 }
 
 /** 格式化薪资：27000 → "¥27,000" */
@@ -266,7 +266,7 @@ async function predictSalary() {
     predictedResult.value = res.data
 
     // 处理特征重要性：归一化到 100% + 中文映射
-    const raw = res.data.feature_importance || []
+    const raw = res.data.featureImportance || []
     const totalWeight = raw.reduce((sum, f) => sum + (f.weight || 0), 0)
     const colors = ['bg-primary-500', 'bg-accent-500', 'bg-blue-500', 'bg-purple-500', 'bg-orange-500', 'bg-green-500']
     factors.value = raw.map((f, i) => ({
@@ -278,7 +278,7 @@ async function predictSalary() {
     factors.value.sort((a, b) => b.weight - a.weight)
   } catch (e) {
     console.error('预测失败', e)
-    predictedResult.value = { predicted_salary: null }
+    predictedResult.value = { predictedSalary: null }
   } finally {
     loading.value = false
   }

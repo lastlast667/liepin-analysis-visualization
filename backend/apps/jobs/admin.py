@@ -8,7 +8,7 @@ class JobAdmin(admin.ModelAdmin):
     list_filter = ["category", "location_city", "experience", "education", "has_language_requirement", "has_weekend_off"]
     search_fields = ["title", "company_name", "job_description"]
     ordering = ["-created_at"]
-    date_hierarchy = "crawl_time"
+    # date_hierarchy = "crawl_time"
 
     fieldsets = [
         ("基本信息", {"fields": ["key", "job_url", "title", "salary"]}),

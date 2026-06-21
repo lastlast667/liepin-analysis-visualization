@@ -8,7 +8,7 @@
           <div class="flex-1 min-w-0 space-y-3">
             <h2 class="text-xl font-bold text-gray-100">{{ job.title }}</h2>
             <!-- 公司名称（仅展示，跳转功能由下方"查看该公司所有岗位"提供） -->
-            <p class="text-lg text-gray-300">{{ job.company_name }}</p>
+            <p class="text-lg text-gray-300">{{ job.companyName }}</p>
             <!-- 薪资 / 城市 / 学历 / 经验 / 招聘人数 -->
             <div class="flex items-center gap-4 text-sm text-gray-400 flex-wrap">
               <span class="flex items-center gap-1 text-primary-400 font-semibold text-base">
@@ -17,36 +17,36 @@
                 </svg>
                 {{ job.salary }}
               </span>
-              <span v-if="job.location_city">· {{ job.location_city }}</span>
+              <span v-if="job.locationCity">· {{ job.locationCity }}</span>
               <span v-if="job.education">· {{ job.education }}</span>
               <span v-if="job.experience">· {{ job.experience }}</span>
-              <span v-if="job.recruit_count">· {{ job.recruit_count }}</span>
+              <span v-if="job.recruitCount">· {{ job.recruitCount }}</span>
             </div>
             <!-- 行业 / 公司规模 / 周末双休或弹性工作 -->
             <div class="flex items-center gap-3 text-sm text-gray-400">
-              <span v-if="job.company_industry">{{ job.company_industry }}</span>
-              <span v-if="job.company_industry && job.company_scale">·</span>
-              <span v-if="job.company_scale">{{ job.company_scale }}</span>
-              <span v-if="(job.company_industry || job.company_scale) && job.has_weekend_off !== null">·</span>
-              <span :class="job.has_weekend_off ? 'text-green-400' : 'text-orange-400'">
-                {{ job.has_weekend_off ? '周末双休' : '弹性工作' }}
+              <span v-if="job.companyIndustry">{{ job.companyIndustry }}</span>
+              <span v-if="job.companyIndustry && job.companyScale">·</span>
+              <span v-if="job.companyScale">{{ job.companyScale }}</span>
+              <span v-if="(job.companyIndustry || job.companyScale) && job.hasWeekendOff !== null">·</span>
+              <span :class="job.hasWeekendOff ? 'text-green-400' : 'text-orange-400'">
+                {{ job.hasWeekendOff ? '周末双休' : '弹性工作' }}
               </span>
-              <span v-if="job.update_time_parsed">· {{ job.update_time_parsed }} 更新</span>
+              <span v-if="job.updateTimeParsed">· {{ job.updateTimeParsed }} 更新</span>
             </div>
             
           </div>
           <!-- 右侧操作按钮：收藏 + 立即申请 -->
-          <div class="flex flex-col gap-2 flex-shrink-0 ml-4">
+          <div class="flex flex-col gap-2 flex-shrink-0 ml-4 w-28">
             <button @click="$emit('toggle-favorite', job)"
-                    class="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2"
+                    class="w-full px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 flex items-center justify-center gap-2"
                     :class="isFavorited ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 'bg-dark-800 text-gray-400 hover:text-yellow-400 border border-dark-600 hover:border-yellow-500/30'">
-              <svg class="w-4 h-4" :fill="isFavorited ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 flex-shrink-0" :fill="isFavorited ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
               </svg>
               {{ isFavorited ? '已收藏' : '收藏' }}
             </button>
-            <a :href="job.job_url" target="_blank"
-               class="px-4 py-2 rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white text-sm font-medium transition-all duration-300 text-center shadow-lg shadow-primary-500/25">
+            <a :href="job.jobUrl" target="_blank"
+               class="w-full px-4 py-2 rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white text-sm font-medium transition-all duration-300 text-center shadow-lg shadow-primary-500/25">
               立即申请
             </a>
           </div>
@@ -57,10 +57,10 @@
       <div class="glass-card p-6">
         <h3 class="text-base font-semibold text-gray-200 mb-4">岗位详情</h3>
         <!-- 岗位亮点标签 -->
-        <div v-if="job.company_tags && job.company_tags.length > 0" class="mb-4">
+        <div v-if="job.companyTags && job.companyTags.length > 0" class="mb-4">
           <p class="text-sm text-gray-500 mb-2">岗位亮点</p>
           <div class="flex flex-wrap gap-2">
-            <span v-for="tag in job.company_tags" :key="tag"
+            <span v-for="tag in job.companyTags" :key="tag"
                   class="px-2.5 py-1 rounded-lg text-xs bg-primary-500/10 text-primary-400 border border-primary-500/20">
               {{ tag }}
             </span>
@@ -69,12 +69,12 @@
         <!-- 岗位描述 -->
         <div class="mb-4">
           <p class="text-sm text-gray-500 mb-2">岗位描述</p>
-          <p class="text-sm text-gray-300 leading-relaxed whitespace-pre-line">{{ job.job_description }}</p>
+          <p class="text-sm text-gray-300 leading-relaxed whitespace-pre-line">{{ job.jobDescription }}</p>
         </div>
         <!-- 语言要求 -->
-        <div v-if="job.language_requirement">
+        <div v-if="job.languageRequirement">
           <p class="text-sm text-gray-500 mb-2">语言要求</p>
-          <p class="text-sm text-gray-300">{{ job.language_requirement }}</p>
+          <p class="text-sm text-gray-300">{{ job.languageRequirement }}</p>
         </div>
       </div>
 
@@ -84,15 +84,15 @@
         <div class="grid grid-cols-2 gap-4 text-sm">
           <div>
             <p class="text-gray-500">公司名称</p>
-            <p class="text-gray-200 font-medium">{{ job.company_name }}</p>
+            <p class="text-gray-200 font-medium">{{ job.companyName }}</p>
           </div>
-          <div v-if="job.company_industry">
+          <div v-if="job.companyIndustry">
             <p class="text-gray-500">所属行业</p>
-            <p class="text-gray-200">{{ job.company_industry }}</p>
+            <p class="text-gray-200">{{ job.companyIndustry }}</p>
           </div>
-          <div v-if="job.company_scale">
+          <div v-if="job.companyScale">
             <p class="text-gray-500">公司规模</p>
-            <p class="text-gray-200">{{ job.company_scale }}</p>
+            <p class="text-gray-200">{{ job.companyScale }}</p>
           </div>
           <div>
             <p class="text-gray-500">岗位数量</p>
@@ -109,7 +109,7 @@
         </div>
         <!-- 查看该公司所有岗位 -->
         <div class="mt-5 pt-4 border-t border-dark-700/50">
-          <button @click="$emit('view-company', job.company_name)"
+          <button @click="$emit('view-company', job.companyName)"
                   class="text-sm text-primary-400 hover:text-primary-300 transition-colors flex items-center gap-1">
             查看该公司所有岗位
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -135,7 +135,7 @@
                class="group cursor-pointer hover:bg-dark-800/50 rounded-lg p-2 -mx-2 transition-colors">
             <p @click="$emit('view-similar', simJob)"
                class="text-sm text-gray-300 group-hover:text-primary-400 transition-colors font-medium truncate">{{ simJob.title }}</p>
-            <p class="text-xs text-gray-500 mt-0.5">{{ simJob.company_name }} · {{ simJob.location_city }}</p>
+            <p class="text-xs text-gray-500 mt-0.5">{{ simJob.companyName }} · {{ simJob.locationCity }}</p>
             <p class="text-xs text-primary-400 mt-0.5 font-medium">{{ simJob.salary }}</p>
           </div>
         </div>

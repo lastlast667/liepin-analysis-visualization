@@ -82,23 +82,45 @@
         </svg>
         <span>岗位推荐</span>
       </router-link>
+
+      <!-- Section: AI -->
+      <div class="pt-4 pb-2">
+        <p class="px-3 text-xs font-semibold uppercase tracking-wider text-gray-600">AI</p>
+      </div>
+
+      <router-link to="/ai/chat" class="nav-item" :class="{ active: isActive('/ai/chat') }">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+        </svg>
+        <span>AI 客服</span>
+      </router-link>
     </nav>
 
-    <div class="p-4 border-t border-dark-600/80">
-      <div class="flex items-center gap-3 px-3 py-2">
+    <div class="p-4 border-t border-dark-600/80 space-y-2">
+      <router-link to="/user/center" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-dark-800 transition-colors">
         <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white text-sm font-medium">
           {{ username.charAt(0).toUpperCase() }}
         </div>
         <div class="flex-1 min-w-0">
           <p class="text-sm font-medium text-gray-200 truncate">{{ username }}</p>
-          <p class="text-xs text-gray-500">在线</p>
+          <p class="text-xs text-gray-500">用户中心</p>
         </div>
-        <button @click="handleLogout" class="p-1.5 rounded-lg hover:bg-dark-800 text-gray-500 hover:text-red-400 transition-colors" title="退出登录">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </router-link>
+      <button @click="handleLogout"
+              class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-red-500/10 transition-colors w-full text-left">
+        <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0">
+          <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
-        </button>
-      </div>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-red-400">退出登录</p>
+          <p class="text-xs text-gray-500">安全退出当前账号</p>
+        </div>
+      </button>
     </div>
   </aside>
 </template>

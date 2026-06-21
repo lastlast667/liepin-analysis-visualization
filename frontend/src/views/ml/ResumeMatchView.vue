@@ -133,7 +133,7 @@
                       <input type="checkbox" :checked="selectedIndustries.length === 0" @change="clearIndustryFilter" class="rounded accent-primary-500" />
                       <span class="text-sm text-gray-300">不限</span>
                     </label>
-                    <label v-for="ind in options.company_industries" :key="ind" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer">
+                    <label v-for="ind in options.companyIndustries" :key="ind" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer">
                       <input type="checkbox" :value="ind" v-model="selectedIndustries" class="rounded accent-primary-500" />
                       <span class="text-sm text-gray-300">{{ ind }}</span>
                     </label>
@@ -206,6 +206,26 @@
             :company-stats="jobDetailCompanyStats"
             :similar-jobs="similarJobs"
             :salary-analysis="salaryAnalysis"
+            @view-company="goCompanyDetail"
+          />
+        </template>
+
+        <!-- 公司详情 -->
+        <template v-else-if="detailView === 'company' && selectedCompany">
+          <div>
+            <button @click="backToResults" class="flex items-center gap-1.5 text-sm text-gray-400 hover:text-primary-400 transition-colors mb-4">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+              返回岗位详情
+            </button>
+          </div>
+          <CompanyDetail
+            :company-name="selectedCompany"
+            :company-jobs="companyJobs"
+            :company-stats="companyDetailStats"
+            @view-job="goJobDetail"
+            @back="backToResults"
           />
         </template>
       </div>
@@ -217,6 +237,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { mlAPI, analysisAPI } from '@/api/index.js'
 import JobDetail from '@/components/job/JobDetail.vue'
+import CompanyDetail from '@/components/job/CompanyDetail.vue'
 import JobList from '@/components/job/JobList.vue'
 
 // ── 排序辅助 ──
@@ -228,7 +249,7 @@ const SCALE_SORT_ORDER = [
 ]
 
 const sortedScales = computed(() => {
-  return [...options.company_scales].sort((a, b) => {
+  return [...options.companyScales].sort((a, b) => {
     const ia = SCALE_SORT_ORDER.indexOf(a)
     const ib = SCALE_SORT_ORDER.indexOf(b)
     return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib)
@@ -303,16 +324,16 @@ function removeFile() {
 // --- 下拉选项（从后端加载） ---
 const options = reactive({
   cities: [],
-  company_scales: [],
-  company_industries: [],
+  companyScales: [],
+  companyIndustries: [],
 })
 
 async function fetchOptions() {
   try {
     const res = await mlAPI.getMatchOptions()
     options.cities = res.data.cities || []
-    options.company_scales = res.data.company_scales || []
-    options.company_industries = res.data.company_industries || []
+    options.companyScales = res.data.companyScales || []
+    options.companyIndustries = res.data.companyIndustries || []
   } catch (e) {
     console.error('加载筛选选项失败', e)
   }
@@ -413,7 +434,10 @@ async function startMatching() {
 }
 
 // --- 岗位详情 ---
-const detailView = ref(null)           // null=列表, 'detail'=详情
+const detailView = ref(null)           // null=列表, 'detail'=详情, 'company'=公司详情
+const selectedCompany = ref('')
+const companyJobs = ref([])
+const companyDetailStats = ref({ jobCount: 0, recruitTotal: 0, avgSalary: '--' })
 const selectedJob = ref(null)
 const jobDetailCompanyStats = ref({ jobCount: 0, recruitTotal: 0, avgSalary: '--' })
 const similarJobs = ref([])
@@ -425,13 +449,38 @@ const salaryAnalysis = ref({
 async function goJobDetail(match) {
   try {
     const res = await analysisAPI.getJobDetail(match.id)
-    selectedJob.value = res.data
-    jobDetailCompanyStats.value = res.data.company_stats || { jobCount: 0, recruitTotal: 0, avgSalary: '--' }
-    similarJobs.value = res.data.similar_jobs || []
-    salaryAnalysis.value = res.data.salary_analysis || {
-      industryAvg: '--', abovePercentage: 0,
-      rangeMin: '--', rangeMax: '--', positionPercentage: 50,
+    const data = res.data
+
+    selectedJob.value = data
+
+    /* 公司统计 —— snake_case → camelCase + 单位转换 */
+    jobDetailCompanyStats.value = {
+      jobCount: data.companyStats?.jobCount || 0,
+      recruitTotal: data.companyStats?.recruitTotal || 0,
+      avgSalary: data.companyStats?.avgSalary
+        ? (data.companyStats.avgSalary / 1000).toFixed(1) + 'k'
+        : '--',
     }
+
+    similarJobs.value = data.similarJobs || []
+
+    /* 薪资分析 —— snake_case → camelCase + 单位转换 + 计算位置百分比 */
+    const sa = data.salaryAnalysis || {}
+    const rangeMin = sa.rangeMin || 0
+    const rangeMax = sa.rangeMax || 0
+    const currentSalary = data.monthSalaryAvg || 0
+    const position = rangeMax > rangeMin
+      ? ((currentSalary - rangeMin) / (rangeMax - rangeMin)) * 100
+      : 50
+
+    salaryAnalysis.value = {
+      industryAvg: sa.industryAvg ? (sa.industryAvg / 1000).toFixed(1) + 'k' : '--',
+      abovePercentage: sa.abovePercentage ?? 0,
+      rangeMin: rangeMin ? (rangeMin / 1000).toFixed(0) + 'k' : '--',
+      rangeMax: rangeMax ? (rangeMax / 1000).toFixed(0) + 'k' : '--',
+      positionPercentage: Math.min(100, Math.max(0, position)),
+    }
+
     detailView.value = 'detail'
     window.scrollTo({ top: 0, behavior: 'smooth' })
   } catch (e) {
@@ -439,8 +488,46 @@ async function goJobDetail(match) {
   }
 }
 
+async function goCompanyDetail(companyName) {
+  selectedCompany.value = companyName
+  await loadCompanyJobs(companyName)
+  detailView.value = 'company'
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+async function loadCompanyJobs(companyName) {
+  try {
+    const res = await analysisAPI.searchJobs({
+      company_name: companyName,
+      page: 1,
+      page_size: 200,
+    })
+    const jobs = res.data.results || []
+    companyJobs.value = jobs
+
+    const jc = jobs.length
+    const rt = jobs.reduce((s, j) => s + (j.recruitCountParsed || 1), 0)
+    const salaries = jobs.map(j => j.monthSalaryAvg).filter(Boolean)
+    const avg = salaries.length > 0
+      ? salaries.reduce((s, v) => s + v, 0) / salaries.length
+      : 0
+    companyDetailStats.value = {
+      jobCount: jc,
+      recruitTotal: rt,
+      avgSalary: avg > 0 ? (avg / 1000).toFixed(1) + 'k' : '--',
+    }
+  } catch (e) {
+    console.error('加载公司岗位列表失败', e)
+  }
+}
+
 function backToResults() {
-  detailView.value = null
+  if (detailView.value === 'company') {
+    // 公司详情 → 返回岗位详情
+    detailView.value = 'detail'
+  } else {
+    detailView.value = null
+  }
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 

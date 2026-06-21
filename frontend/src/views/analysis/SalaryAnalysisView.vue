@@ -64,17 +64,17 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="stat-card">
         <p class="text-sm text-gray-500">平均薪资</p>
-        <p class="text-2xl font-bold text-gray-100 mt-1">{{ formatSalary(currentStats.avg_salary) }}</p>
+        <p class="text-2xl font-bold text-gray-100 mt-1">{{ formatSalary(currentStats.avgSalary) }}</p>
         <p class="text-xs text-gray-500 mt-2">所有职位的平均月薪</p>
       </div>
       <div class="stat-card">
         <p class="text-sm text-gray-500">最高薪资</p>
-        <p class="text-2xl font-bold text-gray-100 mt-1">{{ formatSalary(currentStats.max_salary) }}</p>
+        <p class="text-2xl font-bold text-gray-100 mt-1">{{ formatSalary(currentStats.maxSalary) }}</p>
         <p class="text-xs text-gray-500 mt-2">最高月薪职位</p>
       </div>
       <div class="stat-card">
         <p class="text-sm text-gray-500">薪资中位数</p>
-        <p class="text-2xl font-bold text-gray-100 mt-1">{{ formatSalary(currentStats.median_salary) }}</p>
+        <p class="text-2xl font-bold text-gray-100 mt-1">{{ formatSalary(currentStats.medianSalary) }}</p>
         <p class="text-xs text-gray-500 mt-2">薪资中位数</p>
       </div>
     </div>
@@ -243,21 +243,21 @@ const industryTopN = ref(10)
 
 // ===== API 响应数据存储 =====
 const responseData = ref({
-  stats: { avg_salary: 0, max_salary: 0, median_salary: 0 },
-  salary_range_distribution: [],
-  city_salary_ranking: [],
-  industry_salary_ranking: [],
-  scale_salary: [],
-  education_salary: [],
-  experience_salary: [],
-  weekend_off_boxplot: '',
-  language_boxplot: '',
-  category_boxplot: [],
+  stats: { avgSalary: 0, maxSalary: 0, medianSalary: 0 },
+  salaryRangeDistribution: [],
+  citySalaryRanking: [],
+  industrySalaryRanking: [],
+  scaleSalary: [],
+  educationSalary: [],
+  experienceSalary: [],
+  weekendOffBoxplot: '',
+  languageBoxplot: '',
+  categoryBoxplot: [],
 })
 
 // ===== 图片数据（为模板中的 v-if 暴露 computed） =====
-const weekendOffImage = computed(() => responseData.value.weekend_off_boxplot)
-const languageRequirementImage = computed(() => responseData.value.language_boxplot)
+const weekendOffImage = computed(() => responseData.value.weekendOffBoxplot)
+const languageRequirementImage = computed(() => responseData.value.languageBoxplot)
 
 // ===== 加载状态 =====
 const loading = ref(false)
@@ -273,7 +273,7 @@ const currentStats = computed(() => responseData.value.stats)
 
 // ===== 薪资区间分布（环形图） =====
 const salaryRangeMockData = computed(() =>
-  (responseData.value.salary_range_distribution || []).map(d => ({
+  (responseData.value.salaryRangeDistribution || []).map(d => ({
     name: d.range,
     value: d.count,
   }))
@@ -324,9 +324,9 @@ const salaryRangeOption = computed(() => ({
 // ===== 城市薪资排名（横向条形图） =====
 // 后端返回的是 { city, avg_salary }（单位为元），前端转成 K 单位
 const citySalaryMockData = computed(() =>
-  (responseData.value.city_salary_ranking || []).map(d => ({
+  (responseData.value.citySalaryRanking || []).map(d => ({
     name: d.city,
-    value: +(d.avg_salary / 1000).toFixed(1),
+    value: +(d.avgSalary / 1000).toFixed(1),
   }))
 )
 
@@ -396,9 +396,9 @@ const citySalaryOption = computed(() => {
 
 // ===== 学历与薪资关系（柱状图） =====
 const educationSalaryMockData = computed(() =>
-  (responseData.value.education_salary || []).map(d => ({
+  (responseData.value.educationSalary || []).map(d => ({
     name: d.education,
-    value: +(d.avg_salary / 1000).toFixed(1),
+    value: +(d.avgSalary / 1000).toFixed(1),
   }))
 )
 
@@ -458,9 +458,9 @@ const educationSalaryOption = computed(() => ({
 
 // ===== 经验与薪资关系（柱状图） =====
 const experienceSalaryMockData = computed(() =>
-  (responseData.value.experience_salary || []).map(d => ({
-    name: d.experience_level,
-    value: +(d.avg_salary / 1000).toFixed(1),
+  (responseData.value.experienceSalary || []).map(d => ({
+    name: d.experienceLevel,
+    value: +(d.avgSalary / 1000).toFixed(1),
   }))
 )
 
@@ -520,9 +520,9 @@ const experienceSalaryOption = computed(() => ({
 
 // ===== 行业薪资排名（横向条形图，复用城市薪资排名代码样式） =====
 const industrySalaryMockData = computed(() =>
-  (responseData.value.industry_salary_ranking || []).map(d => ({
+  (responseData.value.industrySalaryRanking || []).map(d => ({
     name: d.industry,
-    value: +(d.avg_salary / 1000).toFixed(1),
+    value: +(d.avgSalary / 1000).toFixed(1),
   }))
 )
 
@@ -594,9 +594,9 @@ const industrySalaryOption = computed(() => {
 
 // ===== 公司规模与薪资关系（柱状图） =====
 const scaleSalaryMockData = computed(() =>
-  (responseData.value.scale_salary || []).map(d => ({
+  (responseData.value.scaleSalary || []).map(d => ({
     name: d.scale,
-    value: +(d.avg_salary / 1000).toFixed(1),
+    value: +(d.avgSalary / 1000).toFixed(1),
   }))
 )
 
@@ -660,7 +660,7 @@ const scaleSalaryOption = computed(() => {
 // ===== 岗位类别与薪资关系（箱线图，不受筛选框影响） =====
 // 后端 category_boxplot 格式：{ category, min, q1, median, q3, max }（单位 K）
 const boxPlotMockData = computed(() =>
-  (responseData.value.category_boxplot || []).map(d => ({
+  (responseData.value.categoryBoxplot || []).map(d => ({
     name: d.category,
     data: [d.min, d.q1, d.median, d.q3, d.max],
   }))

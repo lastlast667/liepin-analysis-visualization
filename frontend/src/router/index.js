@@ -68,6 +68,24 @@ const routes = [
         component: () => import('@/views/ml/JobRecommendationView.vue'),
         meta: { title: '岗位推荐' },
       },
+      {
+        path: 'user/center',
+        name: 'UserCenter',
+        component: () => import('@/views/user/UserCenterView.vue'),
+        meta: { title: '用户中心' },
+      },
+      {
+        path: 'admin',
+        name: 'AdminIndex',
+        component: () => import('@/views/admin/AdminIndexView.vue'),
+        meta: { title: '管理后台', requiresAdmin: true },
+      },
+      {
+        path: 'ai/chat',
+        name: 'AIChat',
+        component: () => import('@/views/ai/AIChatView.vue'),
+        meta: { title: 'AI 客服' },
+      },
     ],
   },
 ]

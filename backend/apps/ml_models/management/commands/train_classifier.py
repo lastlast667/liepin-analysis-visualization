@@ -1,6 +1,6 @@
 # 离线训练，python manage.py
 """
-训练分类器
+训练简历匹配分类器
 """
 import pickle
 from django.core.management.base import BaseCommand

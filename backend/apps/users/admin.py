@@ -44,5 +44,5 @@ class BrowseHistoryAdmin(admin.ModelAdmin):
     list_display = ["user", "job", "browse_time", "stay_duration"]
     list_filter = ["user", "browse_time"]
     search_fields = ["user__username", "job__title"]
-    date_hierarchy = "browse_time"
+    # date_hierarchy = "browse_time"
     list_per_page = 20

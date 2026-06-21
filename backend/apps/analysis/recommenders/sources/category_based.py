@@ -15,6 +15,7 @@ class CategoryBasedRecommender(BaseRecommender):
     def recommend(self, job, top_k: int = 5) -> list[dict]:
         """
         基于类别的推荐
+        需要从请求中获取 job_id
         """
         # get精准获取一条数据，filter筛选出多条匹配数据
         queryset = Job.objects.filter(category=job.category).exclude(id=job.id)

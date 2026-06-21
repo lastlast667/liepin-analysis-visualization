@@ -126,7 +126,7 @@
                 </span>
                 <div class="min-w-0 flex-1">
                   <p @click="goJobDetail(job)" class="text-gray-300 group-hover:text-primary-400 transition-colors truncate cursor-pointer">{{ job.title }}</p>
-                  <p class="text-xs text-gray-500 truncate">{{ job.company_name }}</p>
+                  <p class="text-xs text-gray-500 truncate">{{ job.companyName }}</p>
                 </div>
                 <span class="text-xs text-primary-400 font-medium flex-shrink-0">{{ job.salary }}</span>
               </div>
@@ -231,11 +231,12 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed, watch } from 'vue'
+import { reactive, ref, computed, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import JobList from '@/components/job/JobList.vue'
 import JobDetail from '@/components/job/JobDetail.vue'
 import CompanyDetail from '@/components/job/CompanyDetail.vue'
-import { analysisAPI } from '@/api'
+import { analysisAPI, authAPI } from '@/api'
 
 /* ============================================================
  *   视图与导航状态（父组件统一控制）
@@ -268,7 +269,37 @@ const pageSize = 10
 /* ============================================================
  *   收藏列表
  * ============================================================ */
-const favoriteIds = ref(new Set())
+const favoriteMap = ref({})  // { jobId: favoriteRecordId }
+const favoriteIds = computed(() => new Set(Object.keys(favoriteMap.value).map(Number)))
+
+function isFavorited(jobId) {
+  return jobId in favoriteMap.value
+}
+
+async function toggleFavorite(job) {
+  if (isFavorited(job.id)) {
+    await authAPI.removeFavorite(favoriteMap.value[job.id])
+    const newMap = { ...favoriteMap.value }
+    delete newMap[job.id]
+    favoriteMap.value = newMap
+  } else {
+    const res = await authAPI.addFavorite({ job_id: job.id })
+    favoriteMap.value = { ...favoriteMap.value, [job.id]: res.data.id }
+  }
+}
+
+async function fetchFavoriteMap() {
+  try {
+    const res = await authAPI.getFavorites()
+    const map = {}
+    for (const fav of (res.data || [])) {
+      map[fav.job.id] = fav.id
+    }
+    favoriteMap.value = map
+  } catch (e) {
+    console.error('加载收藏数据失败', e)
+  }
+}
 
 /* ============================================================
  *   加载状态
@@ -333,21 +364,21 @@ async function loadJobs() {
 
     jobResults.value = data.results || []
     jobTotal.value = data.total || 0
-    jobTotalPages.value = data.total_pages || 1
+    jobTotalPages.value = data.totalPages || 1
 
     /* 下拉选项 + 右侧统计栏：仅首次赋值，后续筛选不覆盖 */
     if (cityOptions.value.length === 0) {
-      cityOptions.value = data.city_options || []
+      cityOptions.value = data.cityOptions || []
     }
 
     if (hotJobs.value.length === 0) {
-      hotJobs.value = data.hot_jobs || []
+      hotJobs.value = data.hotJobs || []
     }
     if (hotCities.value.length === 0) {
-      hotCities.value = data.hot_cities || []
+      hotCities.value = data.hotCities || []
     }
     if (hotCompanies.value.length === 0) {
-      hotCompanies.value = data.hot_companies || []
+      hotCompanies.value = data.hotCompanies || []
     }
   } catch (e) {
     console.error('加载岗位列表失败', e)
@@ -368,27 +399,27 @@ async function loadJobDetail(jobId) {
 
     /* 公司统计 */
     jobDetailCompanyStats.value = {
-      jobCount: data.company_stats.job_count || 0,
-      recruitTotal: data.company_stats.recruit_total || 0,
-      avgSalary: data.company_stats.avg_salary
-        ? (data.company_stats.avg_salary / 1000).toFixed(1) + 'k'
+      jobCount: data.companyStats.jobCount || 0,
+      recruitTotal: data.companyStats.recruitTotal || 0,
+      avgSalary: data.companyStats.avgSalary
+        ? (data.companyStats.avgSalary / 1000).toFixed(1) + 'k'
         : '--',
     }
 
-    similarJobs.value = data.similar_jobs || []
+    similarJobs.value = data.similarJobs || []
 
     /* 薪资分析 */
-    const sa = data.salary_analysis || {}
-    const rangeMin = sa.range_min || 0
-    const rangeMax = sa.range_max || 0
-    const currentSalary = data.month_salary_avg || 0
+    const sa = data.salaryAnalysis || {}
+    const rangeMin = sa.rangeMin || 0
+    const rangeMax = sa.rangeMax || 0
+    const currentSalary = data.monthSalaryAvg || 0
     const position = rangeMax > rangeMin
       ? ((currentSalary - rangeMin) / (rangeMax - rangeMin)) * 100
       : 50
 
     salaryAnalysis.value = {
-      industryAvg: sa.industry_avg ? (sa.industry_avg / 1000).toFixed(1) + 'k' : '--',
-      abovePercentage: sa.above_percentage ?? 0,
+      industryAvg: sa.industryAvg ? (sa.industryAvg / 1000).toFixed(1) + 'k' : '--',
+      abovePercentage: sa.abovePercentage ?? 0,
       rangeMin: rangeMin ? (rangeMin / 1000).toFixed(0) + 'k' : '--',
       rangeMax: rangeMax ? (rangeMax / 1000).toFixed(0) + 'k' : '--',
       positionPercentage: Math.min(100, Math.max(0, position)),
@@ -412,8 +443,8 @@ async function loadCompanyJobs(companyName) {
     companyJobs.value = jobs
 
     const jc = jobs.length
-    const rt = jobs.reduce((s, j) => s + (j.recruit_count_parsed || 1), 0)
-    const salaries = jobs.map(j => j.month_salary_avg).filter(Boolean)
+    const rt = jobs.reduce((s, j) => s + (j.recruitCountParsed || 1), 0)
+    const salaries = jobs.map(j => j.monthSalaryAvg).filter(Boolean)
     const avg = salaries.length > 0
       ? salaries.reduce((s, v) => s + v, 0) / salaries.length
       : 0
@@ -452,22 +483,6 @@ function resetFilters() {
 }
 
 /* ============================================================
- *   方法 - 收藏功能
- * ============================================================ */
-function toggleFavorite(job) {
-  if (favoriteIds.value.has(job.id)) {
-    favoriteIds.value.delete(job.id)
-  } else {
-    favoriteIds.value.add(job.id)
-  }
-  favoriteIds.value = new Set(favoriteIds.value)
-}
-
-function isFavorited(jobId) {
-  return favoriteIds.value.has(jobId)
-}
-
-/* ============================================================
  *   方法 - 城市快速筛选
  * ============================================================ */
 function selectCity(cityName) {
@@ -489,6 +504,8 @@ function selectCity(cityName) {
 async function goJobDetail(job) {
   await loadJobDetail(job.id)
   currentView.value = 'detail'
+  // 记录浏览历史
+  authAPI.recordBrowseHistory({ job_id: job.id }).catch(e => console.warn('记录浏览失败', e))
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
@@ -502,6 +519,7 @@ async function goCompanyDetail(companyName) {
 
 async function goSimilarJob(job) {
   await loadJobDetail(job.id)
+  authAPI.recordBrowseHistory({ job_id: job.id }).catch(e => console.warn('记录浏览失败', e))
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
@@ -533,5 +551,42 @@ watch(currentPage, () => {
 /* ============================================================
  *   首次加载
  * ============================================================ */
-loadJobs()
+const route = useRoute()
+const router = useRouter()
+
+onMounted(async () => {
+  loadJobs()
+  fetchFavoriteMap()
+  // 如果有 ?detail=xxx，自动打开详情
+  const detailId = route.query.detail
+  if (detailId) {
+    try {
+      const res = await analysisAPI.getJobDetail(detailId)
+      selectedJob.value = res.data
+      const d = res.data
+      jobDetailCompanyStats.value = {
+        jobCount: d.companyStats?.jobCount || 0,
+        recruitTotal: d.companyStats?.recruitTotal || 0,
+        avgSalary: d.companyStats?.avgSalary ? (d.companyStats.avgSalary / 1000).toFixed(1) + 'k' : '--',
+      }
+      similarJobs.value = d.similarJobs || []
+      const sa = d.salaryAnalysis || {}
+      const rMin = sa.rangeMin || 0
+      const rMax = sa.rangeMax || 0
+      const cur = d.monthSalaryAvg || 0
+      salaryAnalysis.value = {
+        industryAvg: sa.industryAvg ? (sa.industryAvg / 1000).toFixed(1) + 'k' : '--',
+        abovePercentage: sa.abovePercentage ?? 0,
+        rangeMin: rMin ? (rMin / 1000).toFixed(0) + 'k' : '--',
+        rangeMax: rMax ? (rMax / 1000).toFixed(0) + 'k' : '--',
+        positionPercentage: rMax > rMin ? Math.min(100, Math.max(0, ((cur - rMin) / (rMax - rMin)) * 100)) : 50,
+      }
+      currentView.value = 'detail'
+      // 移除 URL 中的 ?detail= 参数
+      router.replace('/analysis/jobs')
+    } catch (e) {
+      console.error('加载指定岗位详情失败', e)
+    }
+  }
+})
 </script>

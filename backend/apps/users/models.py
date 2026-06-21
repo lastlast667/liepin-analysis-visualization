@@ -27,9 +27,12 @@ class UserProfile(models.Model):
     用户资料模型
     """
     # 一对一关联User模型：一个用户对应一份资料，一份资料属于一个用户，关联时级联删除用户资料，反向关联字段为profile
+    # 写在 UserProfile 的外键上，命令 Django 自动给 User 类动态新增一个 .profile 属性，用于查询用户资料记录
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile", verbose_name="用户")
     # 期望城市字段：字符串类型，最大长度100，允许为空，默认值为空字符串
     expected_city = models.CharField("期望城市", max_length=100, blank=True, default="")
+    # 期望岗位字段：字符串类型，最大长度100，允许为空，默认值为空字符串
+    expected_category = models.CharField("期望岗位", max_length=100, blank=True, default="")
     # 技能标签字段：文本类型，允许为空，默认值为空字符串
     skills = models.TextField("技能标签", blank=True, default="")
     # 简历文本字段：文本类型，允许为空，默认值为空字符串
@@ -48,8 +51,11 @@ class Favorite(models.Model):
     用户收藏岗位模型
     """
     # 外键关联User：一个用户可以有多个收藏
+    # 写在 Favorite 的外键上，命令 Django 自动给 User 类动态新增一个 .favorites 属性，用于查询用户收藏的岗位记录
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="favorites", verbose_name="用户")
     # 外键关联Job模型（来自jobs App）：一个岗位可以被多个用户收藏
+    # 写在 Favorite 的外键上，命令 Django 自动给 Job 类动态新增一个 .favorited_by 属性，用于查询收藏岗位岗位的用户
+    # 跨应用关联需要在模型类中指定应用名，例如"jobs.Job"，相同应用的模型类不需要指定应用名
     job = models.ForeignKey("jobs.Job", on_delete=models.CASCADE, related_name="favorited_by", verbose_name="岗位")
     # 收藏时间：创建时自动设置，之后不会改变
     created_at = models.DateTimeField("收藏时间", auto_now_add=True)

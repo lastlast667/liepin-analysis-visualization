@@ -28,12 +28,12 @@
                   class="text-base font-semibold text-gray-200 group-hover:text-primary-400 transition-colors cursor-pointer truncate">
                 {{ job.title }}
               </h3>
-              <span v-if="job.company_industry" class="px-2 py-0.5 rounded text-xs bg-dark-700 text-gray-400 flex-shrink-0">{{ job.company_industry }}</span>
-              <span v-if="showRemoteBadge && job.is_remote"
+              <span v-if="job.companyIndustry" class="px-2 py-0.5 rounded text-xs bg-dark-700 text-gray-400 flex-shrink-0">{{ job.companyIndustry }}</span>
+              <span v-if="showRemoteBadge && job.isRemote"
                     class="px-2 py-0.5 rounded text-xs bg-orange-500/20 text-orange-400 border border-orange-500/30 shrink-0">异地岗位</span>
             </div>
             <!-- 公司名 · 城市 -->
-            <p class="text-sm text-gray-500 mb-2">{{ job.company_name }} · {{ job.location_city }}</p>
+            <p class="text-sm text-gray-500 mb-2">{{ job.companyName }} · {{ job.locationCity }}</p>
             <!-- 薪资 / 经验 / 学历 / 招聘人数 / 更新时间 -->
             <div class="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
               <span class="flex items-center gap-1 text-primary-400 font-medium">
@@ -44,14 +44,15 @@
               </span>
               <span v-if="job.experience">· {{ job.experience }}</span>
               <span v-if="job.education">· {{ job.education }}</span>
-              <span v-if="job.recruit_count">· {{ job.recruit_count }}</span>
-              <span v-if="job.update_time_parsed">· {{ job.update_time_parsed }} 更新</span>
+              <span v-if="job.recruitCount">· {{ job.recruitCount }}</span>
+              <span v-if="job.updateTimeParsed">· {{ job.updateTimeParsed }} 更新</span>
+              <span v-if="job._display_time">· <span class="text-gray-600">{{ formatTime(job._display_time) }}</span></span>
             </div>
           </div>
           <!-- 匹配度（仅简历匹配页面使用） -->
-          <div v-if="showMatchScore && job.match_score != null" class="text-center shrink-0 ml-3">
+          <div v-if="showMatchScore && job.matchScore != null" class="text-center shrink-0 ml-3">
             <div class="w-14 h-14 rounded-full bg-gradient-to-br from-accent-500 to-accent-600 flex items-center justify-center">
-              <span class="text-lg font-bold text-white">{{ job.match_score }}%</span>
+              <span class="text-lg font-bold text-white">{{ job.matchScore }}%</span>
             </div>
             <span class="text-xs text-gray-500 mt-1 block">匹配度</span>
           </div>
@@ -124,6 +125,19 @@ defineEmits(['view-job', 'toggle-favorite', 'page-change'])
 /** 判断岗位是否已收藏 */
 function isFavorited(jobId) {
   return props.favoriteIds.has(jobId)
+}
+
+/** 格式化时间：ISO 字符串 → "2026-06-20 14:30" */
+function formatTime(val) {
+  if (!val) return ''
+  try {
+    const d = new Date(val)
+    if (isNaN(d.getTime())) return String(val).slice(0, 16).replace('T', ' ')
+    const pad = (n) => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+  } catch {
+    return ''
+  }
 }
 
 /** 计算显示的页码按钮列表（最多显示 5 个） */

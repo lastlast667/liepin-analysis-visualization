@@ -760,7 +760,7 @@ def job_detail(request, job_id):
     }
 
     return Response({
-        **job_data,
+        **job_data,     # **代表展开字典，将键值对直接添加到响应中
         "company_stats": company_stats,
         "similar_jobs": similar_jobs,
         "salary_analysis": salary_analysis,

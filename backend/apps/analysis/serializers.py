@@ -11,6 +11,7 @@ from apps.jobs.models import Job
 
 
 class AnalysisReportSerializer(serializers.ModelSerializer):
+    """分析报告序列化器"""
     class Meta:
         model = AnalysisReport
         fields = "__all__"
@@ -24,18 +25,21 @@ class CompanyAnalysisSerializer(serializers.Serializer):
 
 
 class CompanyStatisticsSerializer(serializers.Serializer):
+    """公司统计序列化器"""
     total_companies = serializers.IntegerField()
     avg_scale = serializers.FloatField()
     industry_count = serializers.IntegerField()
 
 
 class CompanyIndustrySerializer(serializers.Serializer):
+    """公司行业序列化器"""
     name = serializers.CharField()
     count = serializers.IntegerField()
     percentage = serializers.FloatField()
 
 
 class CompanyItemSerializer(serializers.Serializer):
+    """公司项序列化器"""
     name = serializers.CharField()
     industry = serializers.CharField()
     scale = serializers.CharField()
@@ -44,12 +48,14 @@ class CompanyItemSerializer(serializers.Serializer):
 
 
 class LocationDistributionSerializer(serializers.Serializer):
+    """位置分布序列化器"""
     total_cities = serializers.IntegerField()
     tier1_ratio = serializers.FloatField()
     tier2_ratio = serializers.FloatField()
 
 
 class JobSearchSerializer(serializers.Serializer):
+    """岗位搜索序列化器"""
     keyword = serializers.CharField(required=False, allow_blank=True)
     city = serializers.CharField(required=False, allow_blank=True)
     salary_min = serializers.FloatField(required=False, allow_null=True)
@@ -61,6 +67,7 @@ class JobSearchSerializer(serializers.Serializer):
 
 
 class SalaryAnalysisSerializer(serializers.Serializer):
+    """薪资分析序列化器"""
     avg_salary = serializers.FloatField()
     median_salary = serializers.FloatField()
     max_salary = serializers.FloatField()
@@ -68,12 +75,14 @@ class SalaryAnalysisSerializer(serializers.Serializer):
 
 
 class SalaryByCategorySerializer(serializers.Serializer):
+    """薪资按分类序列化器"""
     name = serializers.CharField()
     salary = serializers.CharField()
     percentage = serializers.FloatField()
 
 
 class SalaryByExperienceSerializer(serializers.Serializer):
+    """薪资按经验序列化器"""
     level = serializers.CharField()
     min_salary = serializers.CharField()
     avg_salary = serializers.CharField()

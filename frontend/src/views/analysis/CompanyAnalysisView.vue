@@ -64,19 +64,19 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="stat-card">
         <p class="text-sm text-gray-500">公司总数</p>
-        <p class="text-2xl font-bold text-gray-100 mt-1">{{ loading ? '-' : (stats.total_companies || '暂无') }}</p>
+        <p class="text-2xl font-bold text-gray-100 mt-1">{{ loading ? '-' : (stats.totalCompanies || '暂无') }}</p>
         <p class="text-xs text-gray-500 mt-2">符合筛选条件的招聘公司总量</p>
       </div>
       <div class="stat-card">
         <p class="text-sm text-gray-500">覆盖行业总数</p>
-        <p class="text-2xl font-bold text-gray-100 mt-1">{{ loading ? '-' : (stats.total_industries || '暂无') }}</p>
-        <p class="text-xs text-gray-500 mt-2" v-if="stats.top_industry">{{ stats.top_industry.name }} 行业占比最高</p>
+        <p class="text-2xl font-bold text-gray-100 mt-1">{{ loading ? '-' : (stats.totalIndustries || '暂无') }}</p>
+        <p class="text-xs text-gray-500 mt-2" v-if="stats.topIndustry">{{ stats.topIndustry.name }} 行业占比最高</p>
         <p class="text-xs text-gray-500 mt-2" v-else>暂无数据</p>
       </div>
       <div class="stat-card">
         <p class="text-sm text-gray-500">平均规模</p>
-        <p class="text-2xl font-bold text-gray-100 mt-1">{{ loading ? '-' : (stats.avg_scale ? stats.avg_scale + ' 人' : '暂无') }}</p>
-        <p class="text-xs text-gray-500 mt-2">{{ stats.scale_type || '' }}</p>
+        <p class="text-2xl font-bold text-gray-100 mt-1">{{ loading ? '-' : (stats.avgScale ? stats.avgScale + ' 人' : '暂无') }}</p>
+        <p class="text-xs text-gray-500 mt-2">{{ stats.scaleType || '' }}</p>
       </div>
     </div>
 
@@ -159,7 +159,7 @@
                 <span class="px-2 py-1 rounded-lg bg-primary-500/10 text-primary-400 text-xs">{{ item.jobs }} 个</span>
               </td>
               <td class="p-4 text-sm">
-                <span class="px-2 py-1 rounded-lg bg-green-500/10 text-green-400 text-xs">{{ item.recruit_count_parsed || 0 }} 人</span>
+                <span class="px-2 py-1 rounded-lg bg-green-500/10 text-green-400 text-xs">{{ item.recruitCountParsed || 0 }} 人</span>
               </td>
             </tr>
           </tbody>
@@ -371,12 +371,12 @@ async function fetchData() {
 
     // 将返回数据赋值给响应式变量
     Object.assign(stats, data.statistics || {})                     // 统计信息
-    industryDistribution.value = data.industry_distribution || []   // 行业分布
-    scaleDistribution.value = data.scale_distribution || []         // 规模分布
-    provinceDistribution.value = data.province_distribution || []   // 省份分布
-    companiesByJobs.value = data.companies_by_jobs || []           // 按岗位数排序的公司列表
-    companiesByRecruit.value = data.companies_by_recruit || []     // 按招聘人数排序的公司列表
-    const tags = data.company_tags_cloud || []                      // 公司标签云
+    industryDistribution.value = data.industryDistribution || []   // 行业分布
+    scaleDistribution.value = data.scaleDistribution || []         // 规模分布
+    provinceDistribution.value = data.provinceDistribution || []   // 省份分布
+    companiesByJobs.value = data.companiesByJobs || []           // 按岗位数排序的公司列表
+    companiesByRecruit.value = data.companiesByRecruit || []     // 按招聘人数排序的公司列表
+    const tags = data.companyTagsCloud || []                      // 公司标签云
     // 配置词云图
     wordCloudOption.value = {
       tooltip: {
@@ -406,10 +406,10 @@ async function fetchData() {
       }],
     }
     if (categoryOptions.value.length === 0) {
-      categoryOptions.value = data.category_options || []
+      categoryOptions.value = data.categoryOptions || []
     }
     if (partitionOptions.value.length === 0) {
-      partitionOptions.value = data.partition_options || []
+      partitionOptions.value = data.partitionOptions || []
     }
   } catch {
     console.error('请求公司分析数据失败')
