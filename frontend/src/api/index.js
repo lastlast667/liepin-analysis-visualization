@@ -69,4 +69,8 @@ export const adminAPI = {
   deleteJob: (id) => api.delete(`/auth/admin/jobs/${id}/`),
 }
 
+export const aiAPI = {
+  chat: (data) => api.post('/chat/chat/', data),
+}
+
 export default api

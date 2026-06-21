@@ -288,12 +288,19 @@ const chartKey = ref(0)
 const loadedProvinceMaps = new Set()
 
 async function loadChinaMap() {
-  try {
-    const res = await fetch('https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json')
-    const geoJson = await res.json()
-    echarts.registerMap('china', geoJson)
-  } catch {
-    console.warn('中国地图加载失败')
+  // 优先加载本地静态文件，CDN 作为兜底
+  const urls = [
+    '/100000_full.json',
+    'https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json',
+  ]
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, { referrerPolicy: 'no-referrer' })
+      if (!res.ok) continue
+      const geoJson = await res.json()
+      echarts.registerMap('china', geoJson)
+      break
+    } catch { /* try next */ }
   }
   provinceMapLoading.value = false
 }
@@ -307,15 +314,16 @@ async function loadProvinceMap(provinceName) {
   // 直辖市/特别行政区用无区级地图（不含 _full），台湾省也无区级数据
   // 省份用 _full 含区级地图，若加载失败则降级为无区级
   const urls = isSingle
-    ? [`https://geo.datav.aliyun.com/areas_v3/bound/${adcode}.json`]
-    : [
-        `https://geo.datav.aliyun.com/areas_v3/bound/${adcode}_full.json`,
-        `https://geo.datav.aliyun.com/areas_v3/bound/${adcode}.json`,
-      ]
+      ? [`/${adcode}.json`, `https://geo.datav.aliyun.com/areas_v3/bound/${adcode}.json`]
+      : [
+          `/${adcode}_full.json`,
+          `https://geo.datav.aliyun.com/areas_v3/bound/${adcode}_full.json`,
+          `https://geo.datav.aliyun.com/areas_v3/bound/${adcode}.json`,
+        ]
   let success = false
   for (const url of urls) {
     try {
-      const res = await fetch(url)
+      const res = await fetch(url, { referrerPolicy: 'no-referrer' })
       if (!res.ok) continue
       const geoJson = await res.json()
       echarts.registerMap(`province_${adcode}`, geoJson)
