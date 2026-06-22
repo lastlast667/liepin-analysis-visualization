@@ -125,6 +125,7 @@ class Command(BaseCommand):
                 for col, imp in zip(feature_cols, best_model.   # 按顺序把多个序列的元素两两配对打包，生成一组元组
                 feature_importances_)
             ], 
+            "model_used": best_model.__class__.__name__,
         }
         with open(MODEL_DIR / "salary_predict_meta.pkl", "wb") as f:
             pickle.dump(salary_meta, f)

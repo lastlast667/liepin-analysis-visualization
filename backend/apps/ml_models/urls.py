@@ -7,4 +7,5 @@ urlpatterns = [
     path('salary-predict/options/', views.salary_predict_options, name='api_salary_predict_options'),
     path('salary-predict/', views.salary_predict, name='api_salary_predict'),
     path('recommend/', views.job_recommend, name='api_job_recommend'),
+    path('ml-models/', views.model_status, name='api_model_status'),
 ]

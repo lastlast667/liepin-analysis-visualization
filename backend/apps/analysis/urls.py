@@ -7,4 +7,5 @@ urlpatterns = [
     path("jobs/", views.job_search, name="api_job_search"),
     path("salary/", views.salary_analysis, name="api_salary_analysis"),
     path("jobs/<int:job_id>/", views.job_detail, name="api_job_detail"),
+    path("dashboard/", views.get_dashboard, name="api_dashboard"),
 ]

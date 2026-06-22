@@ -9,7 +9,7 @@
       </div>
 
       <!-- 搜索栏：五个筛选条件 + 搜索按钮，同一行 -->
-      <div class="glass-card p-5">
+      <div class="glass-card p-5 overflow-visible relative z-30">
         <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
           <!-- 关键词 -->
           <div>
@@ -17,49 +17,76 @@
             <input v-model="filters.keyword" type="text" class="glass-input w-full" placeholder="岗位名称/公司/技能关键词" @keyup.enter="searchJobs" />
           </div>
           <!-- 城市 -->
-          <div>
+          <div class="relative" ref="cityRef">
             <label class="block text-sm text-gray-400 mb-2">城市</label>
-            <select v-model="filters.city" class="glass-input w-full">
-              <option value="">全国</option>
-              <option v-for="c in cityOptions" :key="c" :value="c">{{ c }}</option>
-            </select>
+            <div @click="cityOpen = !cityOpen" class="glass-input w-full cursor-pointer flex items-center justify-between">
+              <span class="truncate" :class="filters.city ? 'text-gray-100' : 'text-gray-500'">{{ filters.city || '全国' }}</span>
+              <svg class="w-4 h-4 text-gray-500 transition-transform flex-shrink-0" :class="{ 'rotate-180': cityOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+            <div v-if="cityOpen" class="absolute z-[100] mt-1 w-full glass-card p-2 max-h-48 overflow-y-auto shadow-2xl">
+              <div @click="filters.city = ''; cityOpen = false"
+                   class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                   :class="!filters.city ? 'text-primary-400' : 'text-gray-300'">全国</div>
+              <div v-for="c in cityOptions" :key="c" @click="filters.city = c; cityOpen = false"
+                   class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                   :class="filters.city === c ? 'text-primary-400' : 'text-gray-300'">{{ c }}</div>
+            </div>
           </div>
           <!-- 薪资范围 -->
-          <div>
+          <div class="relative" ref="salaryRef">
             <label class="block text-sm text-gray-400 mb-2">薪资范围</label>
-            <select v-model="filters.salary" class="glass-input w-full">
-              <option value="">不限</option>
-              <option value="10k以内">10K以下</option>
-              <option value="10-20k">10-20K</option>
-              <option value="20-30k">20-30K</option>
-              <option value="30-50k">30-50K</option>
-              <option value="50k以上">50K以上</option>
-              <option value="薪资面议">薪资面议</option>
-            </select>
+            <div @click="salaryOpen = !salaryOpen" class="glass-input w-full cursor-pointer flex items-center justify-between">
+              <span class="truncate" :class="filters.salary ? 'text-gray-100' : 'text-gray-500'">{{ salaryLabel || '不限' }}</span>
+              <svg class="w-4 h-4 text-gray-500 transition-transform flex-shrink-0" :class="{ 'rotate-180': salaryOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+            <div v-if="salaryOpen" class="absolute z-[100] mt-1 w-full glass-card p-2 shadow-2xl">
+              <div @click="filters.salary = ''; salaryOpen = false"
+                   class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                   :class="!filters.salary ? 'text-primary-400' : 'text-gray-300'">不限</div>
+              <div v-for="s in salaryOptions" :key="s.value" @click="filters.salary = s.value; salaryOpen = false"
+                   class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                   :class="filters.salary === s.value ? 'text-primary-400' : 'text-gray-300'">{{ s.label }}</div>
+            </div>
           </div>
           <!-- 学历要求 -->
-          <div>
+          <div class="relative" ref="eduRef">
             <label class="block text-sm text-gray-400 mb-2">学历要求</label>
-            <select v-model="filters.education" class="glass-input w-full">
-              <option value="">不限</option>
-              <option value="大专">大专</option>
-              <option value="本科">本科</option>
-              <option value="统招本科">统招本科</option>
-              <option value="硕士">硕士</option>
-              <option value="博士">博士</option>
-            </select>
+            <div @click="eduOpen = !eduOpen" class="glass-input w-full cursor-pointer flex items-center justify-between">
+              <span class="truncate" :class="filters.education ? 'text-gray-100' : 'text-gray-500'">{{ filters.education || '不限' }}</span>
+              <svg class="w-4 h-4 text-gray-500 transition-transform flex-shrink-0" :class="{ 'rotate-180': eduOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+            <div v-if="eduOpen" class="absolute z-[100] mt-1 w-full glass-card p-2 shadow-2xl">
+              <div @click="filters.education = ''; eduOpen = false"
+                   class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                   :class="!filters.education ? 'text-primary-400' : 'text-gray-300'">不限</div>
+              <div v-for="e in eduOptions" :key="e" @click="filters.education = e; eduOpen = false"
+                   class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                   :class="filters.education === e ? 'text-primary-400' : 'text-gray-300'">{{ e }}</div>
+            </div>
           </div>
           <!-- 经验要求 -->
-          <div>
+          <div class="relative" ref="expRef">
             <label class="block text-sm text-gray-400 mb-2">经验要求</label>
-            <select v-model="filters.experience" class="glass-input w-full">
-              <option value="">不限</option>
-              <option value="实习生">实习</option>
-              <option value="应届生">应届</option>
-              <option value="1-3年">1-3年</option>
-              <option value="3-5年">3-5年</option>
-              <option value="5-10年">5-10年</option>
-            </select>
+            <div @click="expOpen = !expOpen" class="glass-input w-full cursor-pointer flex items-center justify-between">
+              <span class="truncate" :class="filters.experience ? 'text-gray-100' : 'text-gray-500'">{{ filters.experience || '不限' }}</span>
+              <svg class="w-4 h-4 text-gray-500 transition-transform flex-shrink-0" :class="{ 'rotate-180': expOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+            <div v-if="expOpen" class="absolute z-[100] mt-1 w-full glass-card p-2 shadow-2xl">
+              <div @click="filters.experience = ''; expOpen = false"
+                   class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                   :class="!filters.experience ? 'text-primary-400' : 'text-gray-300'">不限</div>
+              <div v-for="e in expOptions" :key="e" @click="filters.experience = e; expOpen = false"
+                   class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                   :class="filters.experience === e ? 'text-primary-400' : 'text-gray-300'">{{ e }}</div>
+            </div>
           </div>
           <!-- 搜索按钮 + 重置按钮 -->
           <div class="flex gap-2">
@@ -258,6 +285,40 @@ const filters = reactive({
   education: '',
   experience: '',
 })
+
+// ── 下拉面板状态 ──
+const cityRef = ref(null)
+const salaryRef = ref(null)
+const eduRef = ref(null)
+const expRef = ref(null)
+const cityOpen = ref(false)
+const salaryOpen = ref(false)
+const eduOpen = ref(false)
+const expOpen = ref(false)
+
+const salaryOptions = [
+  { value: '10k以内', label: '10K以下' },
+  { value: '10-20k', label: '10-20K' },
+  { value: '20-30k', label: '20-30K' },
+  { value: '30-50k', label: '30-50K' },
+  { value: '50k以上', label: '50K以上' },
+  { value: '薪资面议', label: '薪资面议' },
+]
+
+const eduOptions = ['大专', '本科', '统招本科', '硕士', '博士']
+const expOptions = ['实习生', '应届生', '1-3年', '3-5年', '5-10年']
+
+const salaryLabel = computed(() => {
+  const found = salaryOptions.find(s => s.value === filters.salary)
+  return found ? found.label : ''
+})
+
+function handleClickOutside(e) {
+  if (cityRef.value && !cityRef.value.contains(e.target)) cityOpen.value = false
+  if (salaryRef.value && !salaryRef.value.contains(e.target)) salaryOpen.value = false
+  if (eduRef.value && !eduRef.value.contains(e.target)) eduOpen.value = false
+  if (expRef.value && !expRef.value.contains(e.target)) expOpen.value = false
+}
 
 /* ============================================================
  *   排序与翻页
@@ -557,6 +618,7 @@ const router = useRouter()
 onMounted(async () => {
   loadJobs()
   fetchFavoriteMap()
+  document.addEventListener('click', handleClickOutside)
   // 如果有 ?detail=xxx，自动打开详情
   const detailId = route.query.detail
   if (detailId) {

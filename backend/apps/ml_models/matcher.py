@@ -168,7 +168,9 @@ def match(resume_text: str, filters: dict):
     
     # 城市处理
     category_pool = _handle_remote_cities(category_pool, cities, top_k)
+    
     return _format_results(category_pool)
+
 def _format_results(category_pool: pd.DataFrame) -> list[dict]:
     """
     格式化匹配结果，返回字典列表

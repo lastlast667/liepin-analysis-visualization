@@ -49,6 +49,7 @@ export const analysisAPI = {
   getSalaryAnalysis: (params) => api.get('/analysis/salary/', { params }),
   searchJobs: (params) => api.get('/analysis/jobs/', { params }),
   getJobDetail: (id) => api.get(`/analysis/jobs/${id}/`),
+  getDashboard: () => api.get('/analysis/dashboard/'),
 }
 
 export const mlAPI = {
@@ -59,6 +60,7 @@ export const mlAPI = {
   getSalaryPredictOptions: () => api.get('/ml/salary-predict/options/'),
   predictSalary: (data) => api.post('/ml/salary-predict/', data),
   getRecommendations: (params) => api.get('/ml/recommend/', { params }),
+  getModelStatus: () => api.get('/ml/ml-models/'),
 }
 
 export const adminAPI = {

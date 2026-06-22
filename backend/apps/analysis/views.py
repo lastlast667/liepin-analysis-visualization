@@ -993,4 +993,34 @@ def salary_analysis(request):
         "category_boxplot": category_boxplot
     })
 
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def get_dashboard(request):
+    """
+    获取仪表盘数据 API
 
+    values()：返回字典列表 QuerySet，按指定字段提取多行原始数据，支持分组统计（annotate）
+    values_list()：返回元组列表 QuerySet，纯数值 / 字段值，轻量化；flat=True 直接返回一维值列表
+    aggregate()：一次性聚合计算，返回单个字典，不返回多行数据，只算总和、均值、总数这类全局指标
+    """
+
+
+    job_count = Job.objects.count()
+    company_count = Job.objects.values_list('company_name', flat=True).distinct().count()
+    avg_salary = Job.objects.aggregate(avg_salary=Avg('month_salary_avg'))['avg_salary']
+    city_count = Job.objects.values_list('location_city', flat=True).distinct().count()
+
+    # 各个岗位类别的岗位数，按数量降序
+    category_list = list(
+        Job.objects.values('category')
+        .annotate(count=Count('category'))
+        .order_by('-count')
+    )
+
+    return Response({
+        "job_count": job_count,
+        "company_count": company_count,
+        "avg_salary": round(avg_salary) if avg_salary else 0,
+        "city_count": city_count,
+        "category_list": category_list
+    })

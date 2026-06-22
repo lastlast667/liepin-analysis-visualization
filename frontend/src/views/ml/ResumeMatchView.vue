@@ -57,13 +57,13 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
-              <div v-if="cityOpen" class="absolute z-[100] mt-1 w-full glass-card p-2 max-h-56 overflow-y-auto shadow-2xl">
+              <div v-if="cityOpen" class="absolute z-[100] mt-1 w-full glass-card p-2 max-h-72 overflow-y-auto shadow-2xl">
                 <label class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer sticky top-0 bg-dark-800 z-10">
                   <input type="checkbox" :checked="selectedCities.length === 0" @change="clearCityFilter" class="rounded accent-primary-500" />
                   <span class="text-sm text-gray-300">不限城市</span>
                 </label>
                 <template v-for="([letter, citiesInGroup], gi) in groupedCities" :key="letter">
-                  <div class="px-3 py-1 mt-1 text-xs font-semibold text-primary-400 bg-dark-800/50 sticky top-11">{{ letter }}</div>
+                  <div class="px-3 py-1 mt-1 text-xs font-semibold text-primary-400 bg-dark-800/50 sticky top-11">{{ letter === '⚡其他' ? '其他' : letter }}</div>
                   <label v-for="city in citiesInGroup" :key="city" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer">
                     <input type="checkbox" :value="city" v-model="selectedCities" class="rounded accent-primary-500" />
                     <span class="text-sm text-gray-300">{{ city }}</span>
@@ -73,16 +73,24 @@
             </div>
 
             <!-- 期望薪资 -->
-            <div>
+            <div class="relative" ref="salaryRef">
               <label class="block text-sm text-gray-400 mb-2">期望薪资</label>
-              <select v-model="selectedSalaryRange" class="glass-input w-full">
-                <option value="">不限</option>
-                <option value="0-10k">0-10k</option>
-                <option value="10k-20k">10k-20k</option>
-                <option value="20k-30k">20k-30k</option>
-                <option value="30k-50k">30k-50k</option>
-                <option value="50k+">50k+</option>
-              </select>
+              <div @click="salaryOpen = !salaryOpen" class="glass-input w-full cursor-pointer flex items-center justify-between">
+                <span class="truncate" :class="selectedSalaryRange ? 'text-gray-100' : 'text-gray-500'">
+                  {{ selectedSalaryRange || '不限' }}
+                </span>
+                <svg class="w-4 h-4 text-gray-500 transition-transform flex-shrink-0" :class="{ 'rotate-180': salaryOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              <div v-if="salaryOpen" class="absolute z-[100] mt-1 w-full glass-card p-2 max-h-48 overflow-y-auto shadow-2xl">
+                <div @click="selectedSalaryRange = ''; salaryOpen = false"
+                     class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                     :class="!selectedSalaryRange ? 'text-primary-400' : 'text-gray-300'">不限</div>
+                <div v-for="s in salaryOptions" :key="s" @click="selectedSalaryRange = s; salaryOpen = false"
+                     class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                     :class="selectedSalaryRange === s ? 'text-primary-400' : 'text-gray-300'">{{ s }}</div>
+              </div>
             </div>
 
             <!-- 更多筛选（折叠面板） -->
@@ -140,13 +148,28 @@
                   </div>
                 </div>
 
-                <!-- 是否双休 -->
-                <div>
-                  <label class="block text-sm text-gray-400 mb-2">是否双休</label>
-                  <select v-model="selectedWeekendOff" class="glass-input w-full text-sm">
-                    <option value="">不限</option>
-                    <option value="true">只看双休</option>
-                  </select>
+                <!-- 双休偏好 -->
+                <div class="relative" ref="weekendRef">
+                  <label class="block text-sm text-gray-400 mb-2">双休偏好</label>
+                  <div @click="weekendOpen = !weekendOpen" class="glass-input w-full cursor-pointer flex items-center justify-between">
+                    <span class="truncate" :class="selectedWeekendOff ? 'text-gray-100' : 'text-gray-500'">
+                      {{ weekendLabel || '不限' }}
+                    </span>
+                    <svg class="w-4 h-4 text-gray-500 transition-transform flex-shrink-0" :class="{ 'rotate-180': weekendOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                  <div v-if="weekendOpen" class="absolute z-[100] mt-1 w-full glass-card p-2 shadow-2xl">
+                    <div @click="selectedWeekendOff = ''; weekendOpen = false"
+                         class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                         :class="!selectedWeekendOff ? 'text-primary-400' : 'text-gray-300'">不限</div>
+                    <div @click="selectedWeekendOff = 'true'; weekendOpen = false"
+                         class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                         :class="selectedWeekendOff === 'true' ? 'text-primary-400' : 'text-gray-300'">双休</div>
+                    <div @click="selectedWeekendOff = 'false'; weekendOpen = false"
+                         class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                         :class="selectedWeekendOff === 'false' ? 'text-primary-400' : 'text-gray-300'">非双休</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -206,7 +229,10 @@
             :company-stats="jobDetailCompanyStats"
             :similar-jobs="similarJobs"
             :salary-analysis="salaryAnalysis"
+            :is-favorited="isFavorited(selectedJob.id)"
             @view-company="goCompanyDetail"
+            @view-job="goJobDetail"
+            @toggle-favorite="toggleFavorite"
           />
         </template>
 
@@ -235,7 +261,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { mlAPI, analysisAPI } from '@/api/index.js'
+import { mlAPI, authAPI, analysisAPI } from '@/api/index.js'
 import JobDetail from '@/components/job/JobDetail.vue'
 import CompanyDetail from '@/components/job/CompanyDetail.vue'
 import JobList from '@/components/job/JobList.vue'
@@ -261,7 +287,7 @@ function getPinyinInitial(char) {
   const map = {
     '阿': 'A', '埃': 'A', '安': 'A', '澳': 'A',
     '八': 'B', '巴': 'B', '白': 'B', '百': 'B', '蚌': 'B', '包': 'B', '宝': 'B', '保': 'B', '北': 'B', '本': 'B', '毕': 'B', '滨': 'B', '波': 'B', '博': 'B',
-    '沧': 'C', '常': 'C', '长': 'C', '朝': 'C', '潮': 'C', '郴': 'C', '成': 'C', '承': 'C', '池': 'C', '赤': 'C', '滁': 'C', '楚': 'C', '川': 'C',
+    '沧': 'C', '常': 'C', '长': 'C', '朝': 'C', '潮': 'C', '郴': 'C', '成': 'C', '承': 'C', '池': 'C', '赤': 'C', '重': 'C', '滁': 'C', '楚': 'C', '川': 'C',
     '达': 'D', '大': 'D', '丹': 'D', '德': 'D', '登': 'D', '迪': 'D', '定': 'D', '东': 'D', '敦': 'D',
     '鄂': 'E', '恩': 'E',
     '法': 'F', '防': 'F', '佛': 'F', '福': 'F', '抚': 'F', '阜': 'F', '富': 'F',
@@ -277,12 +303,12 @@ function getPinyinInitial(char) {
     '日': 'R',
     '三': 'S', '厦': 'S', '汕': 'S', '上': 'S', '韶': 'S', '邵': 'S', '深': 'S', '沈': 'S', '十': 'S', '石': 'S', '双': 'S', '朔': 'S', '四': 'S', '松': 'S', '苏': 'S', '宿': 'S', '绥': 'S', '遂': 'S',
     '台': 'T', '太': 'T', '泰': 'T', '唐': 'T', '天': 'T', '铁': 'T', '通': 'T', '同': 'T', '铜': 'T',
-    '外': 'W', '万': 'W', '威': 'W', '渭': 'W', '温': 'W', '乌': 'W', '芜': 'W', '武': 'W',
+    '外': 'W', '万': 'W', '威': 'W', '渭': 'W', '温': 'W', '乌': 'W', '芜': 'W', '无': 'W', '武': 'W',
     '西': 'X', '咸': 'X', '襄': 'X', '孝': 'X', '新': 'X', '信': 'X', '邢': 'X', '徐': 'X', '许': 'X', '宣': 'X',
     '雅': 'Y', '烟': 'Y', '盐': 'Y', '扬': 'Y', '阳': 'Y', '宜': 'Y', '义': 'Y', '益': 'Y', '银': 'Y', '营': 'Y', '永': 'Y', '榆': 'Y', '玉': 'Y', '岳': 'Y', '云': 'Y',
-    '枣': 'Z', '湛': 'Z', '张': 'Z', '漳': 'Z', '昭': 'Z', '肇': 'Z', '镇': 'Z', '郑': 'Z', '中': 'Z', '舟': 'Z', '周': 'Z', '珠': 'Z', '驻': 'Z', '庄': 'Z', '淄': 'Z', '自': 'Z', '遵': 'Z',
+    '枣': 'Z', '湛': 'Z', '张': 'Z', '漳': 'Z', '昭': 'Z', '肇': 'Z', '镇': 'Z', '郑': 'Z', '中': 'Z', '舟': 'Z', '周': 'Z', '珠': 'Z', '株': 'Z', '驻': 'Z', '庄': 'Z', '淄': 'Z', '自': 'Z', '遵': 'Z',
   }
-  return map[char] || '#'
+  return map[char] || '⚡其他'
 }
 
 /** 城市按拼音首字母排序 + 分组 */
@@ -297,7 +323,12 @@ const groupedCities = computed(() => {
     if (!groups[initial]) groups[initial] = []
     groups[initial].push(city)
   }
-  return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
+  // '⚡其他' 排到最后，其余按字母排序
+  return Object.entries(groups).sort(([a], [b]) => {
+    if (a === '⚡其他') return 1
+    if (b === '⚡其他') return -1
+    return a.localeCompare(b)
+  })
 })
 
 // --- 文件上传 ---
@@ -339,8 +370,43 @@ async function fetchOptions() {
   }
 }
 
+/* ============================================================
+ *   收藏功能
+ * ============================================================ */
+const favoriteIds = ref(new Set())
+
+async function fetchFavorites() {
+  try {
+    const res = await authAPI.getFavorites()
+    favoriteIds.value = new Set((res.data || []).map(f => f.job.id))
+  } catch { /* ignore */ }
+}
+
+async function toggleFavorite(job) {
+  try {
+    const isFav = favoriteIds.value.has(job.id)
+    if (isFav) {
+      const records = await authAPI.getFavorites()
+      const record = (records.data || []).find(f => f.job.id === job.id)
+      if (record) {
+        await authAPI.removeFavorite(record.id)
+        favoriteIds.value.delete(job.id)
+      }
+    } else {
+      await authAPI.addFavorite({ job_id: job.id })
+      favoriteIds.value.add(job.id)
+    }
+    favoriteIds.value = new Set(favoriteIds.value)
+  } catch (e) { console.error('收藏操作失败', e) }
+}
+
+function isFavorited(jobId) {
+  return favoriteIds.value.has(jobId)
+}
+
 onMounted(() => {
   fetchOptions()
+  fetchFavorites()
 })
 
 // --- 筛选条件 ---
@@ -359,7 +425,10 @@ function clearCityFilter() {
 }
 
 // 薪资
+const salaryOptions = ['0-10k', '10k-20k', '20k-30k', '30k-50k', '50k+']
 const selectedSalaryRange = ref('')
+const salaryRef = ref(null)
+const salaryOpen = ref(false)
 
 // 更多筛选折叠
 const moreFilterOpen = ref(false)
@@ -394,6 +463,13 @@ function clearIndustryFilter() {
 
 // 双休
 const selectedWeekendOff = ref('')
+const weekendRef = ref(null)
+const weekendOpen = ref(false)
+const weekendLabel = computed(() => {
+  if (selectedWeekendOff.value === 'true') return '双休'
+  if (selectedWeekendOff.value === 'false') return '非双休'
+  return ''
+})
 
 // --- 匹配 ---
 const hasMatched = ref(false)
@@ -536,11 +612,17 @@ function handleClickOutside(e) {
   if (cityRef.value && !cityRef.value.contains(e.target)) {
     cityOpen.value = false
   }
+  if (salaryRef.value && !salaryRef.value.contains(e.target)) {
+    salaryOpen.value = false
+  }
   if (scaleRef.value && !scaleRef.value.contains(e.target)) {
     scaleOpen.value = false
   }
   if (industryRef.value && !industryRef.value.contains(e.target)) {
     industryOpen.value = false
+  }
+  if (weekendRef.value && !weekendRef.value.contains(e.target)) {
+    weekendOpen.value = false
   }
 }
 

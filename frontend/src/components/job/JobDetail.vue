@@ -133,7 +133,7 @@
         <div class="space-y-3">
           <div v-for="simJob in similarJobs" :key="simJob.id"
                class="group cursor-pointer hover:bg-dark-800/50 rounded-lg p-2 -mx-2 transition-colors">
-            <p @click="$emit('view-similar', simJob)"
+            <p @click="$emit('view-job', simJob)"
                class="text-sm text-gray-300 group-hover:text-primary-400 transition-colors font-medium truncate">{{ simJob.title }}</p>
             <p class="text-xs text-gray-500 mt-0.5">{{ simJob.companyName }} · {{ simJob.locationCity }}</p>
             <p class="text-xs text-primary-400 mt-0.5 font-medium">{{ simJob.salary }}</p>
@@ -208,5 +208,5 @@ defineProps({
   isFavorited: { type: Boolean, default: false },
 })
 
-defineEmits(['view-company', 'toggle-favorite', 'view-similar'])
+defineEmits(['view-company', 'toggle-favorite', 'view-job'])
 </script>

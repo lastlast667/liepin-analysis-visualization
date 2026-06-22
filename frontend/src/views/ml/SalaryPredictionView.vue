@@ -7,64 +7,136 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 overflow-visible">
       <!-- ===== 左侧：预测参数 ===== -->
-      <div class="lg:col-span-2 space-y-6">
-        <div class="glass-card p-6">
+      <div class="lg:col-span-2 space-y-6 overflow-visible">
+        <div class="glass-card p-6 overflow-visible relative z-20">
           <h3 class="text-lg font-semibold text-gray-200 mb-4">预测参数</h3>
           <div class="space-y-4">
-            <div>
+            <div class="relative" ref="cityRef">
               <label class="block text-sm text-gray-400 mb-2">城市</label>
-              <select v-model="form.location_city" class="glass-input w-full">
-                <option value="">请选择城市</option>
-                <option v-for="c in options.cities" :key="c" :value="c">{{ c }}</option>
-              </select>
+              <div @click="cityOpen = !cityOpen" class="glass-input w-full cursor-pointer flex items-center justify-between">
+                <span class="truncate" :class="form.location_city ? 'text-gray-100' : 'text-gray-500'">
+                  {{ form.location_city || '请选择城市' }}
+                </span>
+                <svg class="w-4 h-4 text-gray-500 transition-transform flex-shrink-0" :class="{ 'rotate-180': cityOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              <div v-if="cityOpen" class="absolute z-[100] mt-1 w-full glass-card p-2 max-h-48 overflow-y-auto shadow-2xl">
+                <div @click="form.location_city = ''; cityOpen = false"
+                     class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                     :class="!form.location_city ? 'text-primary-400' : 'text-gray-300'">请选择城市</div>
+                <div v-for="c in options.cities" :key="c" @click="form.location_city = c; cityOpen = false"
+                     class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                     :class="form.location_city === c ? 'text-primary-400' : 'text-gray-300'">{{ c }}</div>
+              </div>
             </div>
-            <div>
+            <div class="relative" ref="categoryRef">
               <label class="block text-sm text-gray-400 mb-2">岗位类别</label>
-              <select v-model="form.category" class="glass-input w-full">
-                <option value="">请选择岗位类别</option>
-                <option v-for="c in options.categories" :key="c" :value="c">{{ c }}</option>
-              </select>
+              <div @click="categoryOpen = !categoryOpen" class="glass-input w-full cursor-pointer flex items-center justify-between">
+                <span class="truncate" :class="form.category ? 'text-gray-100' : 'text-gray-500'">
+                  {{ form.category || '请选择岗位类别' }}
+                </span>
+                <svg class="w-4 h-4 text-gray-500 transition-transform flex-shrink-0" :class="{ 'rotate-180': categoryOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              <div v-if="categoryOpen" class="absolute z-[100] mt-1 w-full glass-card p-2 max-h-48 overflow-y-auto shadow-2xl">
+                <div @click="form.category = ''; categoryOpen = false"
+                     class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                     :class="!form.category ? 'text-primary-400' : 'text-gray-300'">请选择岗位类别</div>
+                <div v-for="c in options.categories" :key="c" @click="form.category = c; categoryOpen = false"
+                     class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                     :class="form.category === c ? 'text-primary-400' : 'text-gray-300'">{{ c }}</div>
+              </div>
             </div>
-            <div>
+            <div class="relative" ref="expRef">
               <label class="block text-sm text-gray-400 mb-2">工作经验</label>
-              <select v-model="form.experience_level" class="glass-input w-full">
-                <option value="">请选择经验</option>
-                <option v-for="e in sortedExpLevels" :key="e" :value="e">{{ e }}</option>
-              </select>
+              <div @click="expOpen = !expOpen" class="glass-input w-full cursor-pointer flex items-center justify-between">
+                <span class="truncate" :class="form.experience_level ? 'text-gray-100' : 'text-gray-500'">
+                  {{ form.experience_level || '请选择经验' }}
+                </span>
+                <svg class="w-4 h-4 text-gray-500 transition-transform flex-shrink-0" :class="{ 'rotate-180': expOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              <div v-if="expOpen" class="absolute z-[100] mt-1 w-full glass-card p-2 max-h-48 overflow-y-auto shadow-2xl">
+                <div @click="form.experience_level = ''; expOpen = false"
+                     class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                     :class="!form.experience_level ? 'text-primary-400' : 'text-gray-300'">请选择经验</div>
+                <div v-for="e in sortedExpLevels" :key="e" @click="form.experience_level = e; expOpen = false"
+                     class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                     :class="form.experience_level === e ? 'text-primary-400' : 'text-gray-300'">{{ e }}</div>
+              </div>
             </div>
-            <div>
+            <div class="relative" ref="eduRef">
               <label class="block text-sm text-gray-400 mb-2">学历要求</label>
-              <select v-model="form.education" class="glass-input w-full">
-                <option value="">请选择学历</option>
-                <option v-for="e in sortedEducations" :key="e" :value="e">{{ e }}</option>
-              </select>
+              <div @click="eduOpen = !eduOpen" class="glass-input w-full cursor-pointer flex items-center justify-between">
+                <span class="truncate" :class="form.education ? 'text-gray-100' : 'text-gray-500'">
+                  {{ form.education || '请选择学历' }}
+                </span>
+                <svg class="w-4 h-4 text-gray-500 transition-transform flex-shrink-0" :class="{ 'rotate-180': eduOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              <div v-if="eduOpen" class="absolute z-[100] mt-1 w-full glass-card p-2 max-h-48 overflow-y-auto shadow-2xl">
+                <div @click="form.education = ''; eduOpen = false"
+                     class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                     :class="!form.education ? 'text-primary-400' : 'text-gray-300'">请选择学历</div>
+                <div v-for="e in sortedEducations" :key="e" @click="form.education = e; eduOpen = false"
+                     class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                     :class="form.education === e ? 'text-primary-400' : 'text-gray-300'">{{ e }}</div>
+              </div>
             </div>
-            <div>
+            <div class="relative" ref="scaleRef">
               <label class="block text-sm text-gray-400 mb-2">公司规模</label>
-              <select v-model="form.company_scale" class="glass-input w-full">
-                <option value="">请选择规模</option>
-                <option v-for="s in sortedScales" :key="s" :value="s">{{ s }}</option>
-              </select>
+              <div @click="scaleOpen = !scaleOpen" class="glass-input w-full cursor-pointer flex items-center justify-between">
+                <span class="truncate" :class="form.company_scale ? 'text-gray-100' : 'text-gray-500'">
+                  {{ form.company_scale || '请选择规模' }}
+                </span>
+                <svg class="w-4 h-4 text-gray-500 transition-transform flex-shrink-0" :class="{ 'rotate-180': scaleOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              <div v-if="scaleOpen" class="absolute z-[100] mt-1 w-full glass-card p-2 max-h-48 overflow-y-auto shadow-2xl">
+                <div @click="form.company_scale = ''; scaleOpen = false"
+                     class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                     :class="!form.company_scale ? 'text-primary-400' : 'text-gray-300'">请选择规模</div>
+                <div v-for="s in sortedScales" :key="s" @click="form.company_scale = s; scaleOpen = false"
+                     class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                     :class="form.company_scale === s ? 'text-primary-400' : 'text-gray-300'">{{ s }}</div>
+              </div>
             </div>
-            <div>
+            <div class="relative" ref="industryRef">
               <label class="block text-sm text-gray-400 mb-2">公司行业</label>
-              <select v-model="form.company_industry" class="glass-input w-full">
-                <option value="">请选择行业</option>
-                <option v-for="ind in options.companyIndustries" :key="ind" :value="ind">{{ ind }}</option>
-              </select>
+              <div @click="industryOpen = !industryOpen" class="glass-input w-full cursor-pointer flex items-center justify-between">
+                <span class="truncate" :class="form.company_industry ? 'text-gray-100' : 'text-gray-500'">
+                  {{ form.company_industry || '请选择行业' }}
+                </span>
+                <svg class="w-4 h-4 text-gray-500 transition-transform flex-shrink-0" :class="{ 'rotate-180': industryOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              <div v-if="industryOpen" class="absolute z-[100] mt-1 w-full glass-card p-2 max-h-48 overflow-y-auto shadow-2xl">
+                <div @click="form.company_industry = ''; industryOpen = false"
+                     class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                     :class="!form.company_industry ? 'text-primary-400' : 'text-gray-300'">请选择行业</div>
+                <div v-for="ind in options.companyIndustries" :key="ind" @click="form.company_industry = ind; industryOpen = false"
+                     class="px-3 py-2 rounded-lg hover:bg-dark-700 cursor-pointer text-sm"
+                     :class="form.company_industry === ind ? 'text-primary-400' : 'text-gray-300'">{{ ind }}</div>
+              </div>
             </div>
             <button @click="predictSalary" :disabled="!canPredict" class="btn-primary w-full">开始预测</button>
           </div>
         </div>
 
-        <div class="glass-card p-6">
+        <div class="glass-card p-6 relative z-10">
           <h3 class="text-lg font-semibold text-gray-200 mb-4">模型信息</h3>
           <div class="space-y-3">
             <div class="flex items-center justify-between text-sm">
               <span class="text-gray-500">模型类型</span>
-              <span class="text-gray-300">{{ predictedResult.modelUsed || '随机森林 / CatBoost' }}</span>
+              <span class="text-gray-300">{{ currentModelUsed || '--' }}</span>
             </div>
             <div class="flex items-center justify-between text-sm">
               <span class="text-gray-500">训练数据</span>
@@ -187,6 +259,7 @@ async function fetchOptions() {
       modelInfo.dataCount = res.data.modelInfo.dataCount ?? '--'
       modelInfo.r2 = res.data.modelInfo.r2 ?? '--'
       modelInfo.mae = res.data.modelInfo.mae ?? '--'
+      currentModelUsed.value = res.data.modelInfo.modelUsed || ''
     }
   } catch (e) {
     console.error('加载预测选项失败', e)
@@ -228,6 +301,34 @@ const form = reactive({
   company_industry: '',
 })
 
+// ── 下拉面板状态 ──
+const cityRef = ref(null)
+const categoryRef = ref(null)
+const expRef = ref(null)
+const eduRef = ref(null)
+const scaleRef = ref(null)
+const industryRef = ref(null)
+const cityOpen = ref(false)
+const categoryOpen = ref(false)
+const expOpen = ref(false)
+const eduOpen = ref(false)
+const scaleOpen = ref(false)
+const industryOpen = ref(false)
+
+function handleClickOutside(e) {
+  if (cityRef.value && !cityRef.value.contains(e.target)) cityOpen.value = false
+  if (categoryRef.value && !categoryRef.value.contains(e.target)) categoryOpen.value = false
+  if (expRef.value && !expRef.value.contains(e.target)) expOpen.value = false
+  if (eduRef.value && !eduRef.value.contains(e.target)) eduOpen.value = false
+  if (scaleRef.value && !scaleRef.value.contains(e.target)) scaleOpen.value = false
+  if (industryRef.value && !industryRef.value.contains(e.target)) industryOpen.value = false
+}
+
+onMounted(() => {
+  fetchOptions()
+  document.addEventListener('click', handleClickOutside)
+})
+
 const canPredict = computed(() => {
   return form.location_city && form.category && form.experience_level && form.education
 })
@@ -236,18 +337,19 @@ const canPredict = computed(() => {
 const predicted = ref(false)
 const loading = ref(false)
 const predictedResult = ref({ predictedSalary: null })
+const currentModelUsed = ref('')
 const factors = ref([])
 
 /** 特征列名 → 中文映射 */
 const FEATURE_NAME_MAP = {
   category: '岗位类别',
-  locationCity: '城市',
-  companyIndustry: '公司行业',
-  expNumeric: '经验年限',
-  eduNumeric: '学历',
-  companyScaleMin: '公司规模',
-  companyScaleMax: '公司规模',
-  hasWeekendOff: '是否双休',
+  location_city: '城市',
+  company_industry: '公司行业',
+  exp_numeric: '经验年限',
+  edu_numeric: '学历',
+  company_scale_min: '公司规模',
+  company_scale_max: '公司规模',
+  has_weekend_off: '是否双休',
 }
 
 /** 格式化薪资：27000 → "¥27,000" */
@@ -264,13 +366,21 @@ async function predictSalary() {
   try {
     const res = await mlAPI.predictSalary({ ...form })
     predictedResult.value = res.data
+    currentModelUsed.value = res.data.modelUsed || ''
 
     // 处理特征重要性：归一化到 100% + 中文映射
     const raw = res.data.featureImportance || []
-    const totalWeight = raw.reduce((sum, f) => sum + (f.weight || 0), 0)
+    // 合并同名特征（如 companyScaleMin + companyScaleMax → 公司规模）
+    const merged = {}
+    for (const f of raw) {
+      const chName = FEATURE_NAME_MAP[f.name] || f.name
+      merged[chName] = (merged[chName] || 0) + (f.weight || 0)
+    }
+    const mergedArr = Object.entries(merged).map(([name, weight]) => ({ name, weight }))
+    const totalWeight = mergedArr.reduce((sum, f) => sum + f.weight, 0)
     const colors = ['bg-primary-500', 'bg-accent-500', 'bg-blue-500', 'bg-purple-500', 'bg-orange-500', 'bg-green-500']
-    factors.value = raw.map((f, i) => ({
-      name: FEATURE_NAME_MAP[f.name] || f.name,
+    factors.value = mergedArr.map((f, i) => ({
+      name: f.name,
       weight: totalWeight > 0 ? Math.round((f.weight / totalWeight) * 100) : 0,
       color: colors[i % colors.length],
     }))

@@ -18,9 +18,8 @@ class SalaryPredictionAdmin(admin.ModelAdmin):
     """
     薪资预测模型管理类
     """
-    list_display = ["user", "city", "category", "experience_years", "education", "work_time", "language_requirement", "predicted_min", "predicted_mid", "predicted_max", "created_at"]
-    list_filter = ["city", "category", "experience_years", "education", "work_time", "language_requirement"]
-
+    list_display = ["user", "city", "category", "experience_level", "education", "company_scale", "company_industry", "predicted_salary", "predicted_min", "predicted_max", "model_used", "created_at"]
+    list_filter = ["city", "category", "experience_level", "education", "company_scale", "company_industry"]
 
 @admin.register(RecommendationLog)
 class RecommendationLogAdmin(admin.ModelAdmin):
@@ -44,7 +43,7 @@ class ResumeMatchResultAdmin(admin.ModelAdmin):
     """
     简历匹配结果模型管理类
     """
-    list_display = ["user", "job", "similarity_score", "created_at"]
+    list_display = ["user", "total_count", "created_at"]
 
     def has_add_permission(self, request):
         return False
