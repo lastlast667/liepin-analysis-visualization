@@ -216,20 +216,14 @@ def job_recommend(request):
     job_ids = [item["job_id"] for item in results]
     jobs_qs = Job.objects.filter(id__in=job_ids)
     job_map = {job.id: job for job in jobs_qs}  # 岗位ID到岗位的映射
-    ordered_jobs = [job_map.get(item["job_id"]) for item in results if item["job_id"] in job_map]  # 按推荐结果排序，过滤不存在的岗位
+    ordered_jobs = [job_map.get(item["job_id"]) for item in results if item["job_id"] in job_map]  # 按推荐结果排序，存储Job对象
 
     # 4. 保存推荐记录
-    log_entries = []    # 推荐岗位列表
-    for item in results:
-        log_entries.append(
-            RecommendationLog(
-                user=user,
-                job_id=item["job_id"],  # django自动识别 job_id 为 FK 的列名
-                score=item["score"],
-                strategy=strategy_param,
-            )
-        )
-    RecommendationLog.objects.bulk_create(log_entries, ignore_conflicts=True)   # 批量创建推荐记录
+    RecommendationLog.objects.create(
+        user=user,
+        results=results,
+        strategy=strategy_param,
+    )
     
     # 5. 序列化岗位，传入 score_map 给 context
     score_map = {item["job_id"]: item["score"] for item in results}

@@ -26,7 +26,7 @@ class RecommendationLogAdmin(admin.ModelAdmin):
     """
     推荐岗位模型管理类
     """
-    list_display = ["user", "job", "score", "created_at"]
+    list_display = ["user", "results", "strategy", "created_at"]
 
     def has_add_permission(self, request):
         return False

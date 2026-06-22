@@ -40,7 +40,7 @@ class SalaryPrediction(models.Model):
     predicted_max = models.IntegerField("预测最高薪资(K)", blank=True, null=True)
     model_used = models.CharField("使用的模型", max_length=100, blank=True, default="")
     feature_importance = models.JSONField("特征重要性", blank=True, default=list)
-    created_at = models.DateTimeField("预测时间", auto_now_add=True)
+    created_at = models.DateTimeField("预测时间", auto_now_add=True)    # 自动添加创建时间字段
 
     class Meta:
         verbose_name = "薪资预测"
@@ -59,11 +59,7 @@ class RecommendationLog(models.Model):
         "users.User", on_delete=models.CASCADE, related_name="recommendation_logs",
         verbose_name="用户"
     )
-    job = models.ForeignKey(
-        "jobs.Job", on_delete=models.CASCADE, related_name="recommendation_logs",
-        verbose_name="推荐岗位"
-    )
-    score = models.FloatField("推荐分数", default=0.0)
+    results = models.JSONField("推荐结果", blank=True, default=list)  # [{"job_id": 1, "score": 0.8}, ...]
     strategy = models.CharField("推荐策略", max_length=20, blank=True, default="hybrid")
     created_at = models.DateTimeField("推荐时间", auto_now_add=True)
 
@@ -73,7 +69,7 @@ class RecommendationLog(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.user.username} → {self.job.title} ({self.score:.2f})"
+        return f"{self.user.username} → {self.strategy} ({len(self.results)} 条)"
 
 
 class ResumeMatchResult(models.Model):

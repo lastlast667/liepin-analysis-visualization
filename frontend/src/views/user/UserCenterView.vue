@@ -215,8 +215,9 @@
         :similar-jobs="similarJobs"
         :salary-analysis="salaryAnalysis"
         :is-favorited="isFavorited(selectedJob.id)"
-        @toggle-favorite="toggleFavorite(selectedJob)"
+        @toggle-favorite="toggleFavorite"
         @view-company="goCompanyDetail"
+        @view-job="goJobDetail"
       />
     </template>
 
