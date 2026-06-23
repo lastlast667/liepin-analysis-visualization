@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -90,7 +91,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.mysql",
         "NAME": "liepin_analysis_db",
         "USER": "root",
-        "PASSWORD": "***REMOVED***",
+        "PASSWORD": os.getenv("DB_PASSWORD", ""),
         "HOST": "localhost",
         "PORT": "3306",
         "OPTIONS": {
@@ -226,17 +227,19 @@ CSRF_COOKIE_DOMAIN = None
 CSRF_TRUSTED_ORIGINS = []
 
 # -------------------------- AI 模型配置 --------------------------
-DEEPSEEK_API_KEY = "***REMOVED***"
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 DEEPSEEK_MODEL = "deepseek-chat" 
 
 # -------------------------- 内网穿透配置 --------------------------
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "https://2d4e2651.r34.cpolar.top"]  # 后端隧道的域名
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "https://6c11684d.r34.cpolar.top"]  # 后端隧道的域名
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "https://5c2024fb.r34.cpolar.top",  # 前端隧道的域名
+    "https://78385020.r34.cpolar.top",  # 前端隧道的域名
 ]
 # ====== 内网穿透配置（cpolar）======
 # 前端隧道域名：5c2024fb.r34.cpolar.top
 # 后端隧道域名：2d4e2651.r34.cpolar.top
 # 注意：cpolar 免费版每次重启域名会变，需要同步更新 ALLOWED_HOSTS 和 CORS
 # 热力图用的 中国地图 GeoJSON 数据 是从阿里云 DataV 的 CDN 实时拉取的，需要referrerPolicy: 'no-referrer' 来解决跨域问题
+
+# 启动后端隧道、前端隧道、Django后端（启动前先更新 settings.py 里的新域名）、Vite前端（启动前先更新 vite.config.js 里的新域名）
