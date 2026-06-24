@@ -13,6 +13,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 
+# 加载 .env 环境变量（必须在访问任何 os.getenv 之前）
+from dotenv import load_dotenv
+load_dotenv()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -224,14 +228,16 @@ CSRF_USE_SESSIONS = False
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SECURE = False
 CSRF_COOKIE_DOMAIN = None
-CSRF_TRUSTED_ORIGINS = []
+CSRF_TRUSTED_ORIGINS = [
+    "https://63ebafa3.r34.cpolar.top",
+]
 
 # -------------------------- AI 模型配置 --------------------------
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 DEEPSEEK_MODEL = "deepseek-chat" 
 
 # -------------------------- 内网穿透配置 --------------------------
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "https://6c11684d.r34.cpolar.top"]  # 后端隧道的域名
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "https://63ebafa3.r34.cpolar.top"]  # 前端隧道域名（如果后端单独开了隧道也要加进来）
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "https://78385020.r34.cpolar.top",  # 前端隧道的域名
@@ -243,3 +249,5 @@ CORS_ALLOWED_ORIGINS = [
 # 热力图用的 中国地图 GeoJSON 数据 是从阿里云 DataV 的 CDN 实时拉取的，需要referrerPolicy: 'no-referrer' 来解决跨域问题
 
 # 启动后端隧道、前端隧道、Django后端（启动前先更新 settings.py 里的新域名）、Vite前端（启动前先更新 vite.config.js 里的新域名）
+# cpolar http 8000
+# cpolar http 5173

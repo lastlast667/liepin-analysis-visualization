@@ -12,10 +12,18 @@ export default defineConfig({
   server: {
     port: 5173,
     allowedHosts: [
-      "5c2024fb.r34.cpolar.top",
+      "63ebafa3.r34.cpolar.top",
     ],
     proxy: {
       '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/admin': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/static': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
